@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.corbant.resonancelauncher"
-        minSdk = 36
+        minSdk = 23
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -45,6 +45,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)
+    implementation(libs.androidx.datastore)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
