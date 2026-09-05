@@ -6,9 +6,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.corbant.resonancelauncher.data.AppItem
@@ -19,6 +24,7 @@ fun AppList(
     onAppClick: (AppItem) -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    onAddAppClick: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier) {
         if (title != null) {
@@ -36,10 +42,18 @@ fun AppList(
         LazyRow(
             modifier = Modifier,
             contentPadding = PaddingValues(horizontal = 48.dp, vertical = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             items(apps, key = { it.packageName }) { app ->
                 AppCard(app = app, onClick = { onAppClick(app) })
+            }
+            if (onAddAppClick != null) {
+                item {
+                    IconButton(onClick = onAddAppClick) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add Apps")
+                    }
+                }
             }
         }
     }

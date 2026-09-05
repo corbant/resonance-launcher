@@ -21,10 +21,20 @@ data class AppItem(
 
 class AppRepository(private val context: Context) {
 
+    companion object {
+        const val PACKAGE_PLAY_STORE = "com.android.vending"
+        const val PACKAGE_TV_SETTINGS = "com.android.tv.settings"
+    }
+
     private val excludedPackages = setOf(
-        "com.android.vending", // Google Play Store
-        "com.android.tv.settings" // Android TV Settings
+        PACKAGE_PLAY_STORE,
+        PACKAGE_TV_SETTINGS
     )
+
+    fun getLaunchIntentForPackage(packageName: String): Intent? {
+        return context.packageManager.getLeanbackLaunchIntentForPackage(packageName)
+            ?: context.packageManager.getLaunchIntentForPackage(packageName)
+    }
 
     suspend fun getInstalledTvApps(): List<AppItem> = withContext(Dispatchers.IO) {
         val packageManager = context.packageManager
