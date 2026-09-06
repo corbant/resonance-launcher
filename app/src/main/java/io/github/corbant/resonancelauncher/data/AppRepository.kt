@@ -1,23 +1,21 @@
 package io.github.corbant.resonancelauncher.data
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
+import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.Color
-import androidx.compose.runtime.Immutable
 import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
+import io.github.corbant.resonancelauncher.model.AppItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-@Immutable
-data class AppItem(
-    val label: String,
-    val packageName: String,
-    val iconBitmap: Bitmap,
-    val launchIntent: Intent,
-    val dominantColor: Int
-)
 
 class AppRepository(private val context: Context) {
 
@@ -31,32 +29,49 @@ class AppRepository(private val context: Context) {
         PACKAGE_TV_SETTINGS
     )
 
-    fun getLaunchIntentForPackage(packageName: String): Intent? {
-        return context.packageManager.getLeanbackLaunchIntentForPackage(packageName)
-            ?: context.packageManager.getLaunchIntentForPackage(packageName)
-    }
-
-    suspend fun getInstalledTvApps(): List<AppItem> = withContext(Dispatchers.IO) {
+    suspend fun getInstalledApps(): List<AppItem> = withContext(Dispatchers.IO) {
         val packageManager = context.packageManager
 
-        val tvIntent = Intent(Intent.ACTION_MAIN, null).apply {
+        val leanbackIntent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
         }
+        val leanbackApps =
+            packageManager.queryIntentActivities(leanbackIntent, PackageManager.MATCH_ALL)
 
-        val resolveInfos = packageManager.queryIntentActivities(tvIntent, 0)
+        val standardIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val standardApps =
+            packageManager.queryIntentActivities(standardIntent, PackageManager.MATCH_ALL)
+                .filter { resolveInfo ->
+                    // exclude pre-installed system apps that do not have a leanback intent
+                    val appInfo = resolveInfo.activityInfo.applicationInfo
+                    val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                    val isUpdatedSystemApp =
+                        (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
 
-        resolveInfos.mapNotNull { resolveInfo ->
+                    !isSystemApp && !isUpdatedSystemApp
+                }
+
+        val installedApps = (leanbackApps + standardApps).distinctBy {
+            it.activityInfo.packageName
+        }
+
+        installedApps.mapNotNull { resolveInfo ->
             val activityInfo = resolveInfo.activityInfo ?: return@mapNotNull null
             val packageName = activityInfo.packageName
 
             if (packageName == context.packageName || packageName in excludedPackages) return@mapNotNull null
 
+            val canLaunch =
+                packageManager.getLeanbackLaunchIntentForPackage(packageName) != null ||
+                        packageManager.getLaunchIntentForPackage(packageName) != null
+
+            if (!canLaunch) return@mapNotNull null
+
             val label = resolveInfo.loadLabel(packageManager).toString()
             val icon = activityInfo.loadIcon(packageManager)
             val bitmap = icon.toBitmap()
-
-            val launchIntent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
-                ?: packageManager.getLaunchIntentForPackage(packageName)
 
             val dominantColor = try {
                 val palette = Palette.from(bitmap).generate()
@@ -65,15 +80,35 @@ class AppRepository(private val context: Context) {
                 Color.BLUE
             }
 
-            if (launchIntent != null) {
-                AppItem(
-                    label = label,
-                    packageName = packageName,
-                    iconBitmap = bitmap,
-                    launchIntent = launchIntent,
-                    dominantColor = dominantColor
-                )
-            } else null
+            AppItem(
+                label = label,
+                packageName = packageName,
+                iconBitmap = bitmap,
+                dominantColor = dominantColor
+            )
         }.sortedBy { it.label }
+    }
+
+    fun observeInstalledApps(): Flow<List<AppItem>> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                launch {
+                    trySend(getInstalledApps())
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+
+        context.registerReceiver(receiver, filter)
+        
+        awaitClose {
+            context.unregisterReceiver(receiver)
+        }
     }
 }
