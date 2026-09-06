@@ -1,5 +1,7 @@
 package io.github.corbant.resonancelauncher.ui.features.home.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -38,7 +40,19 @@ fun AppGrid(
             CircularAppIcon(
                 app = app,
                 onClick = { onLaunchApp(app.packageName) },
-                modifier = if (index == 0) Modifier.focusRequester(firstItemRequester) else Modifier
+                modifier = Modifier
+                    .animateItem(
+                        fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        placementSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+                    .then(
+                        if (index == 0) {
+                            Modifier.focusRequester(firstItemRequester)
+                        } else Modifier
+                    )
             )
         }
     }

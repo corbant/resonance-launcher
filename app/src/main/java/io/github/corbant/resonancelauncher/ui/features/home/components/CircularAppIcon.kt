@@ -99,7 +99,7 @@ fun CircularAppIcon(
         }
 
         if (showLabel) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = app.label,
                 style = MaterialTheme.typography.labelMedium,
