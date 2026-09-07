@@ -7,14 +7,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import io.github.corbant.resonancelauncher.data.AppRepository
+import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.ui.features.home.HomeScreen
 import io.github.corbant.resonancelauncher.ui.features.home.HomeViewModel
 import io.github.corbant.resonancelauncher.ui.features.home.createHomeViewModelFactory
+import io.github.corbant.resonancelauncher.ui.features.settings.SettingsScreen
+import io.github.corbant.resonancelauncher.ui.features.settings.SettingsViewModel
+import io.github.corbant.resonancelauncher.ui.features.settings.createSettingsViewModelFactory
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     appRepository: AppRepository,
+    serverManager: SetupServerManager,
     modifier: Modifier,
 ) {
     NavHost(
@@ -28,7 +33,7 @@ fun AppNavHost(
             )
 
             HomeScreen(
-                onNavigateToSetup = { navController.navigate(Route.Setup) },
+                onNavigateToSettings = { navController.navigate(Route.Settings) },
                 onMediaClick = { id, type ->
                     navController.navigate(Route.MediaDetails(id, type))
                 },
@@ -36,8 +41,10 @@ fun AppNavHost(
             )
         }
 
-        composable<Route.Setup> {
-            // TODO: implement this
+        composable<Route.Settings> {
+            val settingsViewModel: SettingsViewModel =
+                viewModel(factory = createSettingsViewModelFactory(serverManager))
+            SettingsScreen(viewModel = settingsViewModel)
         }
 
         composable<Route.MediaDetails> {

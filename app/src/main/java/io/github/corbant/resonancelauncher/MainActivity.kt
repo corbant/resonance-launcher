@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.corbant.resonancelauncher.data.AppRepository
+import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.ui.navigation.AppNavHost
 import io.github.corbant.resonancelauncher.ui.theme.ResonanceLauncherTheme
 
@@ -18,6 +19,10 @@ class MainActivity : ComponentActivity() {
 
     private val appRepository by lazy {
         AppRepository(applicationContext)
+    }
+
+    private val serverManager by lazy {
+        SetupServerManager(applicationContext)
     }
 
     @OptIn(ExperimentalTvMaterial3Api::class)
@@ -33,6 +38,7 @@ class MainActivity : ComponentActivity() {
                 AppNavHost(
                     navController = navController,
                     appRepository = appRepository,
+                    serverManager = serverManager,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)

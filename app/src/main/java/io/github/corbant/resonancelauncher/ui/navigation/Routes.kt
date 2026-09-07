@@ -8,7 +8,7 @@ sealed interface Route {
     data object Home : Route
 
     @Serializable
-    data object Setup : Route
+    data object Settings : Route
 
     @Serializable
     data class MediaDetails(val mediaId: Int, val mediaType: String) : Route

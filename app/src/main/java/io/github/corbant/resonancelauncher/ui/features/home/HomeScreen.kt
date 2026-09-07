@@ -61,7 +61,7 @@ import io.github.corbant.resonancelauncher.util.launchSystemSettings
 
 @Composable
 fun HomeScreen(
-    onNavigateToSetup: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onMediaClick: (id: Int, type: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
@@ -79,7 +79,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             HomeTopBar(
-                onOpenLauncherSettings = onNavigateToSetup,
+                onOpenLauncherSettings = onNavigateToSettings,
                 onOpenSystemSettings = { context.launchSystemSettings() },
             )
 
