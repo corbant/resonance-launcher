@@ -29,10 +29,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Card
 import androidx.tv.material3.Icon
+import androidx.tv.material3.ListItem
+import androidx.tv.material3.ListItemDefaults
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
+import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import io.github.corbant.resonancelauncher.ui.features.settings.components.ConfigModal
 import io.github.corbant.resonancelauncher.ui.features.settings.components.HiddenAppsModal
@@ -69,127 +72,111 @@ fun SettingsScreen(
                     color = Color.White
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth(0.65f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(0.7f)
                 ) {
-                    // API Configuration Card
-                    Card(
+                    // API Configuration Setting
+                    ListItem(
+                        selected = false,
                         onClick = { viewModel.openConfigModal() },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
+                        headlineContent = {
+                            Text(
+                                text = "Configuration & API Keys",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = "Scan QR code or open local URL for step-by-step API key setup guide",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(alpha = 0.8f)
+                            )
+                        },
+                        leadingContent = {
                             Icon(
                                 Icons.Filled.Info,
-                                contentDescription = null,
+                                contentDescription = null
                             )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Configuration & API Keys",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
+                        },
+                        trailingContent = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                StatusBadge(
+                                    label = "TMDb",
+                                    isSet = config.tmdbApiKey.isNotBlank()
                                 )
-                                Text(
-                                    text = "Scan QR code or open local URL for step-by-step API key setup guide",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.6f)
+                                StatusBadge(
+                                    label = "Streaming",
+                                    isSet = config.streamingAvailabilityApiKey.isNotBlank()
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Text(
-                                        text = if (config.tmdbApiKey.isNotBlank()) "TMDb: Set" else "TMDb: Not Set",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (config.tmdbApiKey.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
-                                    )
-                                    Text(
-                                        text = if (config.streamingAvailabilityApiKey.isNotBlank()) "Streaming: Set" else "Streaming: Not Set",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (config.streamingAvailabilityApiKey.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
-                                    )
-                                }
                             }
-                        }
-                    }
+                        },
+                        shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp))
+                    )
 
-                    // Media Previews Toggle Card
-                    Card(
+                    // Media Previews Setting
+                    ListItem(
+                        selected = false,
                         onClick = { viewModel.toggleShowMediaPreviews() },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
+                        headlineContent = {
+                            Text(
+                                text = "Show Media Previews",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = "Display preview videos on the media details page",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(alpha = 0.8f)
+                            )
+                        },
+                        leadingContent = {
                             Icon(
                                 Icons.Filled.PlayArrow,
-                                contentDescription = null,
+                                contentDescription = null
                             )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Show Media Previews",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Display backdrop artwork on the home screen when focused on media content",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.6f)
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(
-                                        if (config.showMediaPreviews) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.White.copy(alpha = 0.12f)
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = if (config.showMediaPreviews) "ON" else "OFF",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (config.showMediaPreviews) MaterialTheme.colorScheme.onPrimaryContainer else Color.White
-                                )
-                            }
-                        }
-                    }
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = config.showMediaPreviews,
+                                onCheckedChange = null
+                            )
+                        },
+                        shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp))
+                    )
 
-                    // Hidden Apps Management Card
-                    Card(
+                    // Hidden Apps Management Setting
+                    ListItem(
+                        selected = false,
                         onClick = { viewModel.openHiddenAppsModal() },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
+                        headlineContent = {
+                            Text(
+                                text = "Hidden Apps",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = "${uiState.hiddenApps.size} hidden application(s)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(alpha = 0.8f)
+                            )
+                        },
+                        leadingContent = {
                             Icon(
                                 Icons.Filled.Clear,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.error
                             )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Hidden Apps",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "${uiState.hiddenApps.size} hidden application(s)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.6f)
-                                )
-                            }
-                        }
-                    }
+                        },
+                        shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp))
+                    )
                 }
             }
         }
@@ -216,5 +203,36 @@ fun SettingsScreen(
                 onDismiss = { viewModel.closeConfigModal() }
             )
         }
+    }
+}
+
+@Composable
+private fun StatusBadge(
+    label: String,
+    isSet: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val contentColor = if (isSet) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        LocalContentColor.current.copy(alpha = 0.7f)
+    }
+    val backgroundColor = if (isSet) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        LocalContentColor.current.copy(alpha = 0.12f)
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(backgroundColor)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = if (isSet) "$label: Set" else "$label: Not Set",
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor
+        )
     }
 }
