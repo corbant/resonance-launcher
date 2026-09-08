@@ -15,6 +15,7 @@ fun AppTrayRow(
     apps: List<AppItem>,
     title: String,
     onLaunchApp: (String) -> Unit,
+    onAppLongClick: (AppItem) -> Unit,
     onShowAllApps: () -> Unit
 ) {
     HomeRow(
@@ -29,6 +30,7 @@ fun AppTrayRow(
                     fallbackFocusRequester
                 ) else Modifier,
                 onClick = { onLaunchApp(app.packageName) },
+                onLongClick = { onAppLongClick(app) },
                 showLabel = false
             )
         }

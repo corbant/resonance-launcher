@@ -49,7 +49,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import io.github.corbant.resonancelauncher.model.AppItem
 import io.github.corbant.resonancelauncher.model.MediaItem
+import io.github.corbant.resonancelauncher.ui.features.home.components.AppContextMenuDialog
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppGrid
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppTrayRow
 import io.github.corbant.resonancelauncher.ui.features.home.components.ContinueWatchingRow
@@ -58,6 +60,7 @@ import io.github.corbant.resonancelauncher.ui.features.home.components.MediaCont
 import io.github.corbant.resonancelauncher.util.launchAppByPackage
 import io.github.corbant.resonancelauncher.util.launchAppStore
 import io.github.corbant.resonancelauncher.util.launchSystemSettings
+import io.github.corbant.resonancelauncher.util.uninstallAppByPackage
 
 @Composable
 fun HomeScreen(
@@ -69,11 +72,20 @@ fun HomeScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAllAppsOverlay by rememberSaveable { mutableStateOf(false) }
+    var selectedAppPackageName by rememberSaveable { mutableStateOf<String?>(null) }
+    var isFromFavoritesMenu by rememberSaveable { mutableStateOf(false) }
 
-    val installedApps = (uiState as? HomeUiState.Success)?.installedApps ?: emptyList()
+    val installedApps = (uiState as? HomeUiState.Success)?.allApps ?: emptyList()
+    val favoritePackageNames = (uiState as? HomeUiState.Success)?.favoritePackageNames ?: emptyList()
 
-    BackHandler(enabled = true) {
-        showAllAppsOverlay = false
+    val selectedApp = installedApps.find { it.packageName == selectedAppPackageName }
+
+    BackHandler(enabled = selectedAppPackageName != null || showAllAppsOverlay) {
+        if (selectedAppPackageName != null) {
+            selectedAppPackageName = null
+        } else if (showAllAppsOverlay) {
+            showAllAppsOverlay = false
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -88,6 +100,10 @@ fun HomeScreen(
                 onMediaFocused = viewModel::onMediaFocused,
                 onMediaClick = onMediaClick,
                 onLaunchApp = { packageName -> context.launchAppByPackage(packageName) },
+                onAppLongClick = { app ->
+                    selectedAppPackageName = app.packageName
+                    isFromFavoritesMenu = true
+                },
                 onShowAllApps = { showAllAppsOverlay = true },
                 modifier = modifier,
             )
@@ -168,12 +184,52 @@ fun HomeScreen(
                                 showAllAppsOverlay = false
                                 context.launchAppByPackage(packageName)
                             },
+                            onAppLongClick = { app ->
+                                selectedAppPackageName = app.packageName
+                                isFromFavoritesMenu = false
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
                     }
 
                 }
             }
+        }
+
+        if (selectedApp != null) {
+            val isFavorite = favoritePackageNames.contains(selectedApp.packageName)
+            val favoriteIndex = favoritePackageNames.indexOf(selectedApp.packageName)
+            val favoriteCount = favoritePackageNames.size
+
+            AppContextMenuDialog(
+                app = selectedApp,
+                isFavorite = isFavorite,
+                favoriteIndex = favoriteIndex,
+                favoriteCount = favoriteCount,
+                showReorderOptions = isFromFavoritesMenu,
+                showHideOption = !isFromFavoritesMenu,
+                onOpenApp = {
+                    context.launchAppByPackage(selectedApp.packageName)
+                },
+                onToggleFavorite = {
+                    viewModel.toggleFavorite(selectedApp.packageName)
+                },
+                onMoveLeft = {
+                    viewModel.moveFavoriteLeft(selectedApp.packageName)
+                },
+                onMoveRight = {
+                    viewModel.moveFavoriteRight(selectedApp.packageName)
+                },
+                onHideApp = {
+                    viewModel.toggleHideApp(selectedApp.packageName)
+                },
+                onUninstallApp = {
+                    context.uninstallAppByPackage(selectedApp.packageName)
+                },
+                onDismiss = {
+                    selectedAppPackageName = null
+                }
+            )
         }
     }
 }
@@ -184,6 +240,7 @@ private fun HomeContent(
     onMediaFocused: (MediaItem) -> Unit,
     onMediaClick: (Int, String) -> Unit,
     onLaunchApp: (String) -> Unit,
+    onAppLongClick: (AppItem) -> Unit,
     onShowAllApps: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -249,6 +306,7 @@ private fun HomeContent(
                                     apps = section.apps,
                                     title = section.title,
                                     onLaunchApp = onLaunchApp,
+                                    onAppLongClick = onAppLongClick,
                                     onShowAllApps = onShowAllApps
                                 )
                             }

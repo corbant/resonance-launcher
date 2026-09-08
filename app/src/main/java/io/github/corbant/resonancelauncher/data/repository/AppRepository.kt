@@ -1,4 +1,4 @@
-package io.github.corbant.resonancelauncher.data
+package io.github.corbant.resonancelauncher.data.repository
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -90,6 +90,10 @@ class AppRepository(private val context: Context) {
     }
 
     fun observeInstalledApps(): Flow<List<AppItem>> = callbackFlow {
+        launch {
+            trySend(getInstalledApps())
+        }
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 launch {
@@ -106,7 +110,7 @@ class AppRepository(private val context: Context) {
         }
 
         context.registerReceiver(receiver, filter)
-        
+
         awaitClose {
             context.unregisterReceiver(receiver)
         }

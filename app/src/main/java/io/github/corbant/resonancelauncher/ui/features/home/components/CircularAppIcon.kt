@@ -41,6 +41,7 @@ fun CircularAppIcon(
     app: AppItem,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     showLabel: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -81,6 +82,7 @@ fun CircularAppIcon(
                 .width(72.dp)
                 .aspectRatio(CardDefaults.SquareImageAspectRatio),
             onClick = onClick,
+            onLongClick = onLongClick,
         ) {
             Box(
                 modifier = Modifier

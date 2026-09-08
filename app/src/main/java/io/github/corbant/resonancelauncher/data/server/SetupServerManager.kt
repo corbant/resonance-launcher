@@ -43,9 +43,9 @@ class SetupServerManager(private val context: Context) {
 
                         post("/save") {
                             val params = call.receiveParameters()
-                            val tmdbKey = params["tmdbApiKey"] ?: ""
-                            val traktToken = params["traktToken"] ?: ""
-                            onConfigReceived(tmdbKey, traktToken)
+                            val tmdbKey = params["tmdb_key"] ?: ""
+                            val streamingKey = params["streaming_availability_key"] ?: ""
+                            onConfigReceived(tmdbKey, streamingKey)
                         }
                     }
                 }.start(wait = false)

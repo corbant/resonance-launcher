@@ -21,7 +21,8 @@ import io.github.corbant.resonancelauncher.model.AppItem
 fun AppGrid(
     apps: List<AppItem>,
     onLaunchApp: (packageName: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAppLongClick: ((AppItem) -> Unit)? = null
 ) {
     val firstItemRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -40,6 +41,7 @@ fun AppGrid(
             CircularAppIcon(
                 app = app,
                 onClick = { onLaunchApp(app.packageName) },
+                onLongClick = if (onAppLongClick != null) { { onAppLongClick(app) } } else null,
                 modifier = Modifier
                     .animateItem(
                         fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),

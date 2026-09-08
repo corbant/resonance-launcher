@@ -8,7 +8,8 @@ sealed interface HomeUiState {
     data object Loading : HomeUiState
 
     data class Success(
-        val installedApps: List<AppItem> = emptyList(),
+        val allApps: List<AppItem> = emptyList(),
+        val favoritePackageNames: List<String> = emptyList(),
         val featuredBackdropUrl: String? = null,
         val contentSections: List<HomeSection> = emptyList()
     ) : HomeUiState

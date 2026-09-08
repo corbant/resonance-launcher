@@ -68,3 +68,15 @@ fun Context.launchAppStore() {
 
     Toast.makeText(this, "No supported app store found", Toast.LENGTH_SHORT).show()
 }
+
+fun Context.uninstallAppByPackage(packageName: String) {
+    val intent = Intent(Intent.ACTION_DELETE).apply {
+        data = "package:$packageName".toUri()
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    try {
+        startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(this, "Could not launch uninstaller", Toast.LENGTH_SHORT).show()
+    }
+}
