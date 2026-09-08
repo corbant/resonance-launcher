@@ -96,7 +96,7 @@ fun SettingsScreen(
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "Scan a QR code to configure TMDb and Streaming Availability services from your phone",
+                                    text = "Scan QR code or open local URL for step-by-step API key setup guide",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White.copy(alpha = 0.6f)
                                 )

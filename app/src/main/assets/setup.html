@@ -3,53 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Setup TV Launcher</title>
+    <title>Setup Resonance Launcher</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #121212;
-            color: #E0E0E0;
-            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0F0F11;
+            color: #E0E0E6;
+            padding: 24px 16px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: #FFFFFF;
+        }
+        .header p {
+            color: #9A9AB0;
+            font-size: 14px;
             margin: 0;
         }
-        h2 { font-size: 22px; margin-bottom: 8px; }
-        p { color: #888; font-size: 14px; margin-bottom: 24px; }
-        label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+        .card {
+            background-color: #18181C;
+            border: 1px solid #2A2A32;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin: 0;
+        }
+        .tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+        .tag-recommended {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #818CF8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .tag-optional {
+            background-color: rgba(156, 163, 175, 0.15);
+            color: #9CA3AF;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+        .card-description {
+            font-size: 13px;
+            color: #A0A0B0;
+            margin-bottom: 16px;
+        }
+        .instructions {
+            background-color: #202026;
+            border-left: 3px solid #6366F1;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .instructions.alt-accent {
+            border-left-color: #10B981;
+        }
+        .instructions h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #E2E8F0;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 18px;
+            color: #CBD5E1;
+        }
+        .instructions li {
+            margin-bottom: 6px;
+        }
+        .instructions li:last-child {
+            margin-bottom: 0;
+        }
+        .instructions a {
+            color: #818CF8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .instructions a:hover {
+            text-decoration: underline;
+        }
+        .instructions.alt-accent a {
+            color: #34D399;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #E2E8F0;
+        }
         input[type="text"] {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            background: #1E1E1E;
-            border: 1px solid #333;
+            padding: 12px 14px;
+            background: #101014;
+            border: 1px solid #333340;
             border-radius: 8px;
-            color: #fff;
-            box-sizing: border-box;
+            color: #FFFFFF;
             font-size: 14px;
+            font-family: monospace;
+            transition: border-color 0.2s;
         }
-        button {
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #6366F1;
+        }
+        button[type="submit"] {
             width: 100%;
             padding: 14px;
-            background-color: #FFFFFF;
-            color: #000000;
+            background-color: #6366F1;
+            color: #FFFFFF;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        button[type="submit"]:hover {
+            background-color: #4F46E5;
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: #6B7280;
+            margin-top: 16px;
         }
     </style>
 </head>
 <body>
-<h2>Set up your TV Launcher</h2>
-<p>Paste your API keys below to configure your TV home screen.</p>
+<div class="container">
+    <div class="header">
+        <h1>Resonance Launcher Setup</h1>
+        <p>Configure API keys to enable rich movie metadata, backdrop art, and direct deep-linking into your streaming apps.</p>
+    </div>
 
-<form action="/save" method="post">
-    <label for="tmdb">TMDb API Key</label>
-    <input id="tmdb" type="text" name="tmdb_key" placeholder="Enter TMDb Key" required/>
+    <form action="/save" method="post">
+        <!-- TMDb Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">TMDb API Key</h2>
+                <span class="tag tag-recommended">Recommended</span>
+            </div>
+            <div class="card-description">
+                The Movie Database (TMDb) provides posters, backdrop fanart, plot summaries, and trending media content on your TV home screen.
+            </div>
 
-    <label for="streaming_availability">Streaming Availability API Key</label>
-    <input id="streaming_availability" type="text" name="streaming_availability_key" placeholder="Enter Streaming Availability Key"/>
+            <div class="instructions">
+                <h4>How to get a free TMDb API Key:</h4>
+                <ol>
+                    <li>Create a free account or log in at <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener noreferrer">themoviedb.org ↗</a>.</li>
+                    <li>Go to your <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Account Settings > API ↗</a> page.</li>
+                    <li>Click <strong>Create</strong> and select <strong>Developer</strong>.</li>
+                    <li>Accept the terms and enter basic details (e.g. App Name: <em>Resonance Launcher</em>, Description: <em>Personal TV Launcher</em>).</li>
+                    <li>Copy your <strong>API Key (v3 auth)</strong> string and paste it below.</li>
+                </ol>
+            </div>
 
-    <button type="submit">Save & Finish Setup</button>
-</form>
+            <label for="tmdb">API Key (v3 auth)</label>
+            <input id="tmdb" type="text" name="tmdb_key" placeholder="e.g. 1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p" />
+        </div>
+
+        <!-- Streaming Availability Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Streaming Availability API Key</h2>
+                <span class="tag tag-optional">Optional</span>
+            </div>
+            <div class="card-description">
+                Enables direct deep-linking into content inside your installed streaming apps (e.g. Netflix, Prime Video, Disney+, Apple TV+).
+            </div>
+
+            <div class="instructions alt-accent">
+                <h4>How to get a Streaming Availability API Key:</h4>
+                <ol>
+                    <li>Visit the <a href="https://developers.movieofthenight.com/" target="_blank" rel="noopener noreferrer">Movie of the Night Developer Portal ↗</a>.</li>
+                    <li>Sign up or log into your developer account.</li>
+                    <li>Generate or copy your <strong>Streaming Availability API Key</strong>.</li>
+                    <li>Paste your API key into the field below.</li>
+                </ol>
+            </div>
+
+            <label for="streaming_availability">Streaming Availability API Key</label>
+            <input id="streaming_availability" type="text" name="streaming_availability_key" placeholder="Enter API Key from Movie of the Night" />
+        </div>
+
+        <button type="submit">Save & Apply Settings</button>
+    </form>
+
+    <div class="footer-note">
+        Changes will be instantly transmitted to Resonance Launcher on your TV network.
+    </div>
+</div>
 </body>
 </html>

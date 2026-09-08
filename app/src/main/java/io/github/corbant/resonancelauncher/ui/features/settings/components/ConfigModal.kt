@@ -108,6 +108,11 @@ fun ConfigModal(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.7f)
                             )
+                            Text(
+                                text = "The web page provides step-by-step instructions and direct links to create free TMDb metadata and Movie of the Night deep-linking API keys.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.5f)
+                            )
 
                             Box(
                                 modifier = Modifier

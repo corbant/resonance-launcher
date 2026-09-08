@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings Saved - Resonance Launcher</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0F0F11;
+            color: #E0E0E6;
+            padding: 32px 16px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .card {
+            background: #18181C;
+            border: 1px solid #2A2A32;
+            border-radius: 16px;
+            padding: 32px 24px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: #10B981;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        h2 { font-size: 22px; margin: 0 0 12px 0; color: #fff; }
+        p { color: #9A9AB0; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0; }
+        .status-box {
+            background: #202026;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .status-item:not(:last-child) {
+            border-bottom: 1px solid #2A2A32;
+        }
+        .badge {
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+        .badge-empty { background: rgba(156, 163, 175, 0.15); color: #9CA3AF; }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #6366F1;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✓</div>
+        <h2>Settings Saved!</h2>
+        <p>Your API configuration has been updated and sent to Resonance Launcher on your TV.</p>
+        <div class="status-box">
+            <div class="status-item">
+                <span>TMDb API Key</span>
+                <span class="badge {{TMDB_BADGE_CLASS}}">{{TMDB_STATUS}}</span>
+            </div>
+            <div class="status-item">
+                <span>Streaming Availability Key</span>
+                <span class="badge {{STREAMING_BADGE_CLASS}}">{{STREAMING_STATUS}}</span>
+            </div>
+        </div>
+        <a href="/" class="btn">Back to Setup Page</a>
+    </div>
+</body>
+</html>

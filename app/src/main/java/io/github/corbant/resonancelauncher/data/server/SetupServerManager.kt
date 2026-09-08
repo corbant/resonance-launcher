@@ -7,6 +7,7 @@ import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -28,7 +29,7 @@ class SetupServerManager(private val context: Context) {
                 server = embeddedServer(
                     factory = CIO,
                     port = serverPort,
-                    parentCoroutineContext = Dispatchers.IO + SupervisorJob()
+                    parentCoroutineContext = Dispatchers.IO + SupervisorJob(),
                 ) {
                     routing {
                         get("/") {
@@ -43,9 +44,26 @@ class SetupServerManager(private val context: Context) {
 
                         post("/save") {
                             val params = call.receiveParameters()
-                            val tmdbKey = params["tmdb_key"] ?: ""
-                            val streamingKey = params["streaming_availability_key"] ?: ""
+                            val tmdbKey = params["tmdb_key"]?.trim() ?: ""
+                            val streamingKey = params["streaming_availability_key"]?.trim() ?: ""
                             onConfigReceived(tmdbKey, streamingKey)
+
+                            val tmdbBadgeClass = if (tmdbKey.isNotBlank()) "badge-success" else "badge-empty"
+                            val tmdbStatus = if (tmdbKey.isNotBlank()) "Updated" else "Not Changed"
+                            val streamingBadgeClass = if (streamingKey.isNotBlank()) "badge-success" else "badge-empty"
+                            val streamingStatus = if (streamingKey.isNotBlank()) "Updated" else "Not Changed"
+
+                            val htmlTemplate = context.assets.open("save.html").bufferedReader().use { it.readText() }
+                            val responseHtml = htmlTemplate
+                                .replace("{{TMDB_BADGE_CLASS}}", tmdbBadgeClass)
+                                .replace("{{TMDB_STATUS}}", tmdbStatus)
+                                .replace("{{STREAMING_BADGE_CLASS}}", streamingBadgeClass)
+                                .replace("{{STREAMING_STATUS}}", streamingStatus)
+
+                            call.respondText(
+                                text = responseHtml,
+                                contentType = ContentType.Text.Html
+                            )
                         }
                     }
                 }.start(wait = false)
