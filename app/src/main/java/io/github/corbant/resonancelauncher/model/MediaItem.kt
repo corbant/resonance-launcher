@@ -4,6 +4,10 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class MediaItem(
+    val id: Int,
     val title: String,
-    val backdropUrl: String
+    val posterUrl: String?,
+    val backdropUrl: String?,
+    val rating: String,
+    val overview: String
 )

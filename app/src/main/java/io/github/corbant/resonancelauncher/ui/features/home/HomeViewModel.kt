@@ -6,6 +6,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
+import io.github.corbant.resonancelauncher.data.tmdb.StreamingProviderMapping
+import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
+import io.github.corbant.resonancelauncher.data.tmdb.toMediaItem
 import io.github.corbant.resonancelauncher.model.MediaItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val appRepository: AppRepository,
-    private val preferencesRepository: LauncherPreferencesRepository
+    private val preferencesRepository: LauncherPreferencesRepository,
+    private val tmdbClient: TmdbClient
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -40,16 +44,45 @@ class HomeViewModel(
                         config.favoritePackageNames.mapNotNull { appsMap[it] }
                     }
 
-                    val sections = listOf(
-                        HomeSection.AppTray(title = "Favorites", apps = favoriteApps)
-                    )
+                    var featuredMedia: List<MediaItem>? = null
+                    if (!config.tmdbApiKey.isBlank()) {
+                        val installedPackages = apps.map { it.packageName }
+                        val providerIds =
+                            StreamingProviderMapping.getProviderIdsForInstalledPackages(
+                                installedPackages
+                            )
 
-                    val currentBackdrop = (_uiState.value as? HomeUiState.Success)?.featuredBackdropUrl
+                        val results = tmdbClient.getFeaturedByProviders(
+                            apiKey = config.tmdbApiKey,
+                            providerIds = providerIds
+                        )
+
+                        featuredMedia = results.map { it.toMediaItem() }
+                    }
+
+                    val sections = buildList {
+                        add(HomeSection.AppTray(title = "Favorite Apps", apps = favoriteApps))
+
+                        if (!featuredMedia.isNullOrEmpty()) {
+                            add(
+                                HomeSection.MediaContent(
+                                    title = "Featured Content",
+                                    items = featuredMedia
+                                )
+                            )
+                        }
+                    }
+
+                    val currentFocusedMedia =
+                        (_uiState.value as? HomeUiState.Success)?.focusedMedia
+                    val currentBackdrop =
+                        currentFocusedMedia?.backdropUrl
 
                     HomeUiState.Success(
                         allApps = visibleApps,
                         favoritePackageNames = config.favoritePackageNames,
                         featuredBackdropUrl = currentBackdrop,
+                        focusedMedia = currentFocusedMedia,
                         contentSections = sections
                     )
                 }.collect { newState ->
@@ -64,7 +97,21 @@ class HomeViewModel(
     fun onMediaFocused(mediaItem: MediaItem) {
         _uiState.update { currentState ->
             if (currentState is HomeUiState.Success) {
-                currentState.copy(featuredBackdropUrl = mediaItem.backdropUrl)
+                currentState.copy(
+                    featuredBackdropUrl = mediaItem.backdropUrl,
+                    focusedMedia = mediaItem
+                )
+            } else currentState
+        }
+    }
+
+    fun onMediaUnfocused(mediaItem: MediaItem) {
+        _uiState.update { currentState ->
+            if (currentState is HomeUiState.Success && currentState.focusedMedia?.id == mediaItem.id) {
+                currentState.copy(
+                    featuredBackdropUrl = null,
+                    focusedMedia = null
+                )
             } else currentState
         }
     }
@@ -96,9 +143,10 @@ class HomeViewModel(
 
 fun createHomeViewModelFactory(
     appRepository: AppRepository,
-    preferencesRepository: LauncherPreferencesRepository
+    preferencesRepository: LauncherPreferencesRepository,
+    tmdbClient: TmdbClient
 ) = viewModelFactory {
     initializer {
-        HomeViewModel(appRepository, preferencesRepository)
+        HomeViewModel(appRepository, preferencesRepository, tmdbClient)
     }
 }

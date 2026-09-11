@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
+import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.ui.features.home.HomeScreen
 import io.github.corbant.resonancelauncher.ui.features.home.HomeViewModel
 import io.github.corbant.resonancelauncher.ui.features.home.createHomeViewModelFactory
@@ -21,6 +22,7 @@ fun AppNavHost(
     navController: NavHostController,
     appRepository: AppRepository,
     preferencesRepository: LauncherPreferencesRepository,
+    tmdbClient: TmdbClient,
     serverManager: SetupServerManager,
     modifier: Modifier,
 ) {
@@ -31,7 +33,11 @@ fun AppNavHost(
     ) {
         composable<Route.Home> {
             val homeViewModel: HomeViewModel = viewModel(
-                factory = createHomeViewModelFactory(appRepository, preferencesRepository)
+                factory = createHomeViewModelFactory(
+                    appRepository,
+                    preferencesRepository,
+                    tmdbClient
+                )
             )
 
             HomeScreen(
@@ -45,7 +51,13 @@ fun AppNavHost(
 
         composable<Route.Settings> {
             val settingsViewModel: SettingsViewModel =
-                viewModel(factory = createSettingsViewModelFactory(serverManager, preferencesRepository, appRepository))
+                viewModel(
+                    factory = createSettingsViewModelFactory(
+                        serverManager,
+                        preferencesRepository,
+                        appRepository
+                    )
+                )
             SettingsScreen(viewModel = settingsViewModel)
         }
 

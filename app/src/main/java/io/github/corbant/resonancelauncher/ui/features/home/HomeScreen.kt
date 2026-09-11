@@ -55,6 +55,7 @@ import io.github.corbant.resonancelauncher.ui.features.home.components.AppContex
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppGrid
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppTrayRow
 import io.github.corbant.resonancelauncher.ui.features.home.components.ContinueWatchingRow
+import io.github.corbant.resonancelauncher.ui.features.home.components.FeaturedMediaBanner
 import io.github.corbant.resonancelauncher.ui.features.home.components.HomeTopBar
 import io.github.corbant.resonancelauncher.ui.features.home.components.MediaContentRow
 import io.github.corbant.resonancelauncher.util.launchAppByPackage
@@ -88,26 +89,94 @@ fun HomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column {
-            HomeTopBar(
-                onOpenLauncherSettings = onNavigateToSettings,
-                onOpenSystemSettings = { context.launchSystemSettings() },
-            )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        // 1. Background Layer: Full-screen backdrop artwork and Google TV gradient scrims
+        (uiState as? HomeUiState.Success)?.let { successState ->
+            AnimatedVisibility(
+                visible = successState.featuredBackdropUrl != null,
+                enter = fadeIn(tween(400)),
+                exit = fadeOut(tween(400))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Crossfade(
+                        targetState = successState.featuredBackdropUrl,
+                        animationSpec = tween(600),
+                        label = "BackdropCrossfade"
+                    ) { backdropUrl ->
+                        if (backdropUrl != null) {
+                            AsyncImage(
+                                model = backdropUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
 
-            HomeContent(
-                uiState = uiState,
-                onMediaFocused = viewModel::onMediaFocused,
-                onMediaClick = onMediaClick,
-                onLaunchApp = { packageName -> context.launchAppByPackage(packageName) },
-                onAppLongClick = { app ->
-                    selectedAppPackageName = app.packageName
-                    isFromFavoritesMenu = true
-                },
-                onShowAllApps = { showAllAppsOverlay = true },
-                modifier = modifier,
-            )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.85f),
+                                        Color.Black.copy(alpha = 0.5f),
+                                        Color.Transparent
+                                    ),
+                                    endX = 1100f
+                                )
+                            )
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.8f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.5f),
+                                        Color.Black.copy(alpha = 0.95f),
+                                        Color.Black
+                                    ),
+                                    startY = 300f
+                                )
+                            )
+                    )
+                }
+            }
         }
+
+        // 2. Main Scrollable Content Layer (TopBar, Hero Banner, Rows all scroll together)
+        HomeContent(
+            uiState = uiState,
+            onOpenLauncherSettings = onNavigateToSettings,
+            onOpenSystemSettings = { context.launchSystemSettings() },
+            onMediaFocused = viewModel::onMediaFocused,
+            onMediaUnfocused = viewModel::onMediaUnfocused,
+            onMediaClick = onMediaClick,
+            onLaunchApp = { packageName -> context.launchAppByPackage(packageName) },
+            onAppLongClick = { app ->
+                selectedAppPackageName = app.packageName
+                isFromFavoritesMenu = true
+            },
+            onShowAllApps = { showAllAppsOverlay = true },
+            modifier = modifier
+        )
 
         AnimatedVisibility(
             visible = showAllAppsOverlay,
@@ -237,7 +306,10 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
+    onOpenLauncherSettings: () -> Unit,
+    onOpenSystemSettings: () -> Unit,
     onMediaFocused: (MediaItem) -> Unit,
+    onMediaUnfocused: (MediaItem) -> Unit,
     onMediaClick: (Int, String) -> Unit,
     onLaunchApp: (String) -> Unit,
     onAppLongClick: (AppItem) -> Unit,
@@ -247,7 +319,6 @@ private fun HomeContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
     ) {
         when (uiState) {
             is HomeUiState.Loading -> {
@@ -263,42 +334,27 @@ private fun HomeContent(
             }
 
             is HomeUiState.Success -> {
-                Crossfade(
-                    targetState = uiState.featuredBackdropUrl,
-                    animationSpec = tween(600),
-                    label = "BackdropCrossfade"
-                ) { backdropUrl ->
-                    if (backdropUrl != null) {
-                        AsyncImage(
-                            model = backdropUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Black
-                                )
-                            )
-                        )
-                )
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .focusRestorer(),
-                    contentPadding = PaddingValues(bottom = 48.dp),
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
+                    verticalArrangement = Arrangement.spacedBy(28.dp)
                 ) {
+                    item(key = "home_top_bar") {
+                        HomeTopBar(
+                            onOpenLauncherSettings = onOpenLauncherSettings,
+                            onOpenSystemSettings = onOpenSystemSettings
+                        )
+                    }
+
+                    item(key = "featured_hero_banner") {
+                        FeaturedMediaBanner(
+                            mediaItem = uiState.focusedMedia,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
                     items(uiState.contentSections) { section ->
                         when (section) {
                             is HomeSection.AppTray -> {
@@ -312,7 +368,15 @@ private fun HomeContent(
                             }
 
                             is HomeSection.MediaContent -> {
-                                MediaContentRow()
+                                MediaContentRow(
+                                    title = section.title,
+                                    items = section.items,
+                                    onMediaFocused = onMediaFocused,
+                                    onMediaUnfocused = onMediaUnfocused,
+                                    onMediaClick = { mediaItem ->
+                                        onMediaClick(mediaItem.id, "movie")
+                                    }
+                                )
                             }
 
                             is HomeSection.ContinueWatching -> {

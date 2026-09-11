@@ -55,6 +55,10 @@ dependencies {
     implementation(libs.qrcode)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.json)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

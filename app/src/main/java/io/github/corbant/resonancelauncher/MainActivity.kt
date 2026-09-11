@@ -13,6 +13,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
+import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.ui.navigation.AppNavHost
 import io.github.corbant.resonancelauncher.ui.theme.ResonanceLauncherTheme
 
@@ -30,6 +31,10 @@ class MainActivity : ComponentActivity() {
         SetupServerManager(applicationContext)
     }
 
+    private val tmdbClient by lazy {
+        TmdbClient()
+    }
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +49,7 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     appRepository = appRepository,
                     preferencesRepository = preferencesRepository,
+                    tmdbClient = tmdbClient,
                     serverManager = serverManager,
                     modifier = Modifier
                         .fillMaxSize()

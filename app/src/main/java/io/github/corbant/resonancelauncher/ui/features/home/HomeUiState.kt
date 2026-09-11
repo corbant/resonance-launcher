@@ -11,6 +11,7 @@ sealed interface HomeUiState {
         val allApps: List<AppItem> = emptyList(),
         val favoritePackageNames: List<String> = emptyList(),
         val featuredBackdropUrl: String? = null,
+        val focusedMedia: MediaItem? = null,
         val contentSections: List<HomeSection> = emptyList()
     ) : HomeUiState
 
