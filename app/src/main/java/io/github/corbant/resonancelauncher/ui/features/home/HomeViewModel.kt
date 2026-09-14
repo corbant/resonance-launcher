@@ -100,7 +100,10 @@ class HomeViewModel(
 
     fun onMediaUnfocused(mediaItem: MediaItem) {
         _uiState.update { currentState ->
-            if (currentState is HomeUiState.Success) {
+            if (currentState is HomeUiState.Success && currentState.featuredBackdropUrl.equals(
+                    mediaItem.backdropUrl
+                )
+            ) {
                 currentState.copy(
                     featuredBackdropUrl = null,
                 )
