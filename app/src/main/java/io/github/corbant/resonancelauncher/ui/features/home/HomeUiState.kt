@@ -27,12 +27,14 @@ sealed interface HomeSection {
 
     data class MediaContent(
         override val title: String,
-        val items: List<MediaItem>
+        val items: List<MediaItem>,
+        val mediaType: String = "movie"
     ) : HomeSection
 
     data class ImmersiveMediaContent(
         override val title: String,
-        val items: List<MediaItem>
+        val items: List<MediaItem>,
+        val mediaType: String = "movie"
     ) : HomeSection
 
     data class ContinueWatching(

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.github.corbant.resonancelauncher.ui.features.home.components
 
 import androidx.compose.animation.AnimatedContent
@@ -8,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewResponder
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewResponder
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.runtime.Composable
@@ -34,17 +39,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import io.github.corbant.resonancelauncher.model.MediaItem
 import kotlinx.coroutines.launch
 
+@Suppress("DEPRECATION")
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImmersiveMediaContentRow(
     title: String,
@@ -59,6 +70,7 @@ fun ImmersiveMediaContentRow(
 
     var isFocused by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<MediaItem?>(null) }
+    var rowSize by remember { mutableStateOf(Size.Zero) }
 
     val coroutineScope = rememberCoroutineScope()
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -84,10 +96,29 @@ fun ImmersiveMediaContentRow(
         }
     }
 
+    val bringIntoViewResponder = remember {
+        object : BringIntoViewResponder {
+            override fun calculateRectForParent(localRect: Rect): Rect {
+                return Rect(
+                    left = localRect.left,
+                    top = 0f,
+                    right = localRect.right,
+                    bottom = rowSize.height.coerceAtLeast(localRect.bottom)
+                )
+            }
+
+            override suspend fun bringChildIntoView(localRect: () -> Rect?) {
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(animatedHeight)
+            .onSizeChanged { rowSize = it.toSize() }
+            .bringIntoViewResponder(bringIntoViewResponder)
+            .bringIntoViewRequester(bringIntoViewRequester)
             .onFocusChanged { state ->
                 isFocused = state.hasFocus
             }
@@ -151,9 +182,7 @@ fun ImmersiveMediaContentRow(
 
         HomeRow(
             title = if (!isFocused) title else null,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .bringIntoViewRequester(bringIntoViewRequester)
+            modifier = Modifier.align(Alignment.BottomStart)
         ) { fallbackFocusRequester ->
             itemsIndexed(
                 items = items,

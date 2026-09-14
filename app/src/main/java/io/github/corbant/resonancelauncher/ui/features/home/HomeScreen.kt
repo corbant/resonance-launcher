@@ -353,7 +353,10 @@ private fun HomeContent(
                         )
                     }
 
-                    items(uiState.contentSections) { section ->
+                    items(
+                        items = uiState.contentSections,
+                        key = { it.title }
+                    ) { section ->
                         when (section) {
                             is HomeSection.AppTray -> {
                                 AppTrayRow(
@@ -370,7 +373,7 @@ private fun HomeContent(
                                     title = section.title,
                                     items = section.items,
                                     onMediaClick = { mediaItem ->
-                                        onMediaClick(mediaItem.id, "movie")
+                                        onMediaClick(mediaItem.id, section.mediaType)
                                     }
                                 )
                             }
@@ -382,7 +385,7 @@ private fun HomeContent(
                                     onMediaFocused = onMediaFocused,
                                     onMediaUnfocused = onMediaUnfocused,
                                     onMediaClick = { mediaItem ->
-                                        onMediaClick(mediaItem.id, "movie")
+                                        onMediaClick(mediaItem.id, section.mediaType)
                                     }
                                 )
                             }

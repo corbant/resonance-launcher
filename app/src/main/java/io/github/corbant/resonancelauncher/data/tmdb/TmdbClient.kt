@@ -50,21 +50,57 @@ class TmdbClient {
         }
     }
 
-    suspend fun getFeaturedByProviders(
+    suspend fun getFeaturedMoviesByProviders(
         apiKey: String,
         providerIds: List<Int>,
-        region: String = "US"
+        region: String = "US",
+        monetizationTypes: List<String> = listOf("flatrate", "free", "ads")
+    ): List<TmdbMediaDto> {
+        return discoverMedia(
+            type = "movie",
+            apiKey = apiKey,
+            providerIds = providerIds,
+            region = region,
+            monetizationTypes = monetizationTypes
+        )
+    }
+
+    suspend fun getFeaturedTvShowsByProviders(
+        apiKey: String,
+        providerIds: List<Int>,
+        region: String = "US",
+        monetizationTypes: List<String> = listOf("flatrate", "free", "ads")
+    ): List<TmdbMediaDto> {
+        return discoverMedia(
+            type = "tv",
+            apiKey = apiKey,
+            providerIds = providerIds,
+            region = region,
+            monetizationTypes = monetizationTypes
+        )
+    }
+
+    private suspend fun discoverMedia(
+        type: String,
+        apiKey: String,
+        providerIds: List<Int>,
+        region: String,
+        monetizationTypes: List<String>
     ): List<TmdbMediaDto> {
         if (apiKey.isBlank() || providerIds.isEmpty()) return emptyList()
 
         val providerPipeSeparated = providerIds.joinToString("|")
+        val monetizationPipeSeparated = monetizationTypes.joinToString("|")
 
         return try {
             val response: TmdbDiscoverResponse =
-                client.get("https://api.themoviedb.org/3/discover/movie") {
+                client.get("https://api.themoviedb.org/3/discover/$type") {
                     parameter("api_key", apiKey)
                     parameter("watch_region", region)
                     parameter("with_watch_providers", providerPipeSeparated)
+                    if (monetizationPipeSeparated.isNotBlank()) {
+                        parameter("with_watch_monetization_types", monetizationPipeSeparated)
+                    }
                     parameter("sort_by", "popularity.desc")
                     parameter("vote_count.gte", 100)
                 }.body()

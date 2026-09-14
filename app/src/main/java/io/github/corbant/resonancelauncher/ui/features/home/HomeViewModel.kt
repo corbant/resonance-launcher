@@ -10,6 +10,8 @@ import io.github.corbant.resonancelauncher.data.tmdb.StreamingProviderMapping
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.data.tmdb.toMediaItem
 import io.github.corbant.resonancelauncher.model.MediaItem
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,7 +46,8 @@ class HomeViewModel(
                         config.favoritePackageNames.mapNotNull { appsMap[it] }
                     }
 
-                    var featuredMedia: List<MediaItem>? = null
+                    var featuredMovies: List<MediaItem>? = null
+                    var featuredTvShows: List<MediaItem>? = null
                     if (!config.tmdbApiKey.isBlank()) {
                         val installedPackages = apps.map { it.packageName }
                         val providerIds =
@@ -52,22 +55,43 @@ class HomeViewModel(
                                 installedPackages
                             )
 
-                        val results = tmdbClient.getFeaturedByProviders(
-                            apiKey = config.tmdbApiKey,
-                            providerIds = providerIds
-                        )
-
-                        featuredMedia = results.map { it.toMediaItem() }
+                        coroutineScope {
+                            val moviesDeferred = async {
+                                tmdbClient.getFeaturedMoviesByProviders(
+                                    apiKey = config.tmdbApiKey,
+                                    providerIds = providerIds
+                                )
+                            }
+                            val tvDeferred = async {
+                                tmdbClient.getFeaturedTvShowsByProviders(
+                                    apiKey = config.tmdbApiKey,
+                                    providerIds = providerIds
+                                )
+                            }
+                            featuredMovies = moviesDeferred.await().map { it.toMediaItem() }
+                            featuredTvShows = tvDeferred.await().map { it.toMediaItem() }
+                        }
                     }
 
                     val sections = buildList {
                         add(HomeSection.AppTray(title = "Favorite Apps", apps = favoriteApps))
 
-                        if (!featuredMedia.isNullOrEmpty()) {
+                        if (!featuredMovies.isNullOrEmpty()) {
                             add(
                                 HomeSection.ImmersiveMediaContent(
-                                    title = "Featured Content",
-                                    items = featuredMedia
+                                    title = "Featured Movies",
+                                    items = featuredMovies,
+                                    mediaType = "movie"
+                                )
+                            )
+                        }
+
+                        if (!featuredTvShows.isNullOrEmpty()) {
+                            add(
+                                HomeSection.ImmersiveMediaContent(
+                                    title = "Featured TV Shows",
+                                    items = featuredTvShows,
+                                    mediaType = "tv"
                                 )
                             )
                         }
