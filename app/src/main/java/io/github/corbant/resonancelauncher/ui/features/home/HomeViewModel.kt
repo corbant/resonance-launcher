@@ -65,7 +65,7 @@ class HomeViewModel(
 
                         if (!featuredMedia.isNullOrEmpty()) {
                             add(
-                                HomeSection.MediaContent(
+                                HomeSection.ImmersiveMediaContent(
                                     title = "Featured Content",
                                     items = featuredMedia
                                 )
@@ -73,16 +73,10 @@ class HomeViewModel(
                         }
                     }
 
-                    val currentFocusedMedia =
-                        (_uiState.value as? HomeUiState.Success)?.focusedMedia
-                    val currentBackdrop =
-                        currentFocusedMedia?.backdropUrl
-
                     HomeUiState.Success(
                         allApps = visibleApps,
                         favoritePackageNames = config.favoritePackageNames,
-                        featuredBackdropUrl = currentBackdrop,
-                        focusedMedia = currentFocusedMedia,
+                        featuredBackdropUrl = null,
                         contentSections = sections
                     )
                 }.collect { newState ->
@@ -99,7 +93,6 @@ class HomeViewModel(
             if (currentState is HomeUiState.Success) {
                 currentState.copy(
                     featuredBackdropUrl = mediaItem.backdropUrl,
-                    focusedMedia = mediaItem
                 )
             } else currentState
         }
@@ -107,10 +100,9 @@ class HomeViewModel(
 
     fun onMediaUnfocused(mediaItem: MediaItem) {
         _uiState.update { currentState ->
-            if (currentState is HomeUiState.Success && currentState.focusedMedia?.id == mediaItem.id) {
+            if (currentState is HomeUiState.Success) {
                 currentState.copy(
                     featuredBackdropUrl = null,
-                    focusedMedia = null
                 )
             } else currentState
         }

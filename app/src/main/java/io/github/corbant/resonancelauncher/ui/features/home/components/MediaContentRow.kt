@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.corbant.resonancelauncher.model.MediaItem
 
@@ -12,12 +11,8 @@ import io.github.corbant.resonancelauncher.model.MediaItem
 fun MediaContentRow(
     title: String,
     items: List<MediaItem>,
-    onMediaFocused: (MediaItem) -> Unit,
     onMediaClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
-    onMediaUnfocused: (MediaItem) -> Unit = {},
-    cardWidth: Dp = 150.dp,
-    aspectRatio: Float = 2f / 3f,
 ) {
     if (items.isEmpty()) return
 
@@ -31,11 +26,11 @@ fun MediaContentRow(
         ) { index, item ->
             MediaPosterCard(
                 item = item,
-                cardWidth = cardWidth,
-                aspectRatio = aspectRatio,
+                cardWidth = 150.dp,
+                aspectRatio = 2f / 3f,
                 modifier = if (index == 0) Modifier.focusRequester(fallbackFocusRequester) else Modifier,
-                onFocused = { onMediaFocused(item) },
-                onUnfocused = { onMediaUnfocused(item) },
+                onFocused = {},
+                onUnfocused = {},
                 onClick = { onMediaClick(item) }
             )
         }

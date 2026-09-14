@@ -11,7 +11,6 @@ sealed interface HomeUiState {
         val allApps: List<AppItem> = emptyList(),
         val favoritePackageNames: List<String> = emptyList(),
         val featuredBackdropUrl: String? = null,
-        val focusedMedia: MediaItem? = null,
         val contentSections: List<HomeSection> = emptyList()
     ) : HomeUiState
 
@@ -28,7 +27,12 @@ sealed interface HomeSection {
 
     data class MediaContent(
         override val title: String,
-        val items: List<MediaItem>,
+        val items: List<MediaItem>
+    ) : HomeSection
+
+    data class ImmersiveMediaContent(
+        override val title: String,
+        val items: List<MediaItem>
     ) : HomeSection
 
     data class ContinueWatching(

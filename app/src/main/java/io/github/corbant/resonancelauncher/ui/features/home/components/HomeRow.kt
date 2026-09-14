@@ -20,17 +20,19 @@ import androidx.tv.material3.Text
 @Composable
 fun HomeRow(
     modifier: Modifier = Modifier,
-    title: String,
+    title: String?,
     content: LazyListScope.(fallbackFocusRequestor: FocusRequester) -> Unit
 ) {
     val fallbackFocusRequester = remember { FocusRequester() }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            modifier = Modifier.padding(start = 48.dp),
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
+        if (!title.isNullOrEmpty()) {
+            Text(
+                modifier = Modifier.padding(start = 48.dp),
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = 48.dp, vertical = 28.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),

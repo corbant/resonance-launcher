@@ -55,8 +55,8 @@ import io.github.corbant.resonancelauncher.ui.features.home.components.AppContex
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppGrid
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppTrayRow
 import io.github.corbant.resonancelauncher.ui.features.home.components.ContinueWatchingRow
-import io.github.corbant.resonancelauncher.ui.features.home.components.FeaturedMediaBanner
 import io.github.corbant.resonancelauncher.ui.features.home.components.HomeTopBar
+import io.github.corbant.resonancelauncher.ui.features.home.components.ImmersiveMediaContentRow
 import io.github.corbant.resonancelauncher.ui.features.home.components.MediaContentRow
 import io.github.corbant.resonancelauncher.util.launchAppByPackage
 import io.github.corbant.resonancelauncher.util.launchAppStore
@@ -77,7 +77,8 @@ fun HomeScreen(
     var isFromFavoritesMenu by rememberSaveable { mutableStateOf(false) }
 
     val installedApps = (uiState as? HomeUiState.Success)?.allApps ?: emptyList()
-    val favoritePackageNames = (uiState as? HomeUiState.Success)?.favoritePackageNames ?: emptyList()
+    val favoritePackageNames =
+        (uiState as? HomeUiState.Success)?.favoritePackageNames ?: emptyList()
 
     val selectedApp = installedApps.find { it.packageName == selectedAppPackageName }
 
@@ -89,7 +90,11 @@ fun HomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
         // 1. Background Layer: Full-screen backdrop artwork and Google TV gradient scrims
         (uiState as? HomeUiState.Success)?.let { successState ->
             AnimatedVisibility(
@@ -348,13 +353,6 @@ private fun HomeContent(
                         )
                     }
 
-                    item(key = "featured_hero_banner") {
-                        FeaturedMediaBanner(
-                            mediaItem = uiState.focusedMedia,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                    }
-
                     items(uiState.contentSections) { section ->
                         when (section) {
                             is HomeSection.AppTray -> {
@@ -369,6 +367,16 @@ private fun HomeContent(
 
                             is HomeSection.MediaContent -> {
                                 MediaContentRow(
+                                    title = section.title,
+                                    items = section.items,
+                                    onMediaClick = { mediaItem ->
+                                        onMediaClick(mediaItem.id, "movie")
+                                    }
+                                )
+                            }
+
+                            is HomeSection.ImmersiveMediaContent -> {
+                                ImmersiveMediaContentRow(
                                     title = section.title,
                                     items = section.items,
                                     onMediaFocused = onMediaFocused,
