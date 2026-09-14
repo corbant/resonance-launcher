@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
+import io.github.corbant.resonancelauncher.data.repository.MediaRepository
 import io.github.corbant.resonancelauncher.data.tmdb.StreamingProviderMapping
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.data.tmdb.toMediaItem
@@ -22,7 +23,8 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val preferencesRepository: LauncherPreferencesRepository,
-    private val tmdbClient: TmdbClient
+    private val tmdbClient: TmdbClient,
+    private val mediaRepository: MediaRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -70,6 +72,8 @@ class HomeViewModel(
                             }
                             featuredMovies = moviesDeferred.await().map { it.toMediaItem() }
                             featuredTvShows = tvDeferred.await().map { it.toMediaItem() }
+                            featuredMovies?.let { mediaRepository.cacheSummaryItems(it) }
+                            featuredTvShows?.let { mediaRepository.cacheSummaryItems(it) }
                         }
                     }
 
@@ -163,9 +167,10 @@ class HomeViewModel(
 fun createHomeViewModelFactory(
     appRepository: AppRepository,
     preferencesRepository: LauncherPreferencesRepository,
-    tmdbClient: TmdbClient
+    tmdbClient: TmdbClient,
+    mediaRepository: MediaRepository
 ) = viewModelFactory {
     initializer {
-        HomeViewModel(appRepository, preferencesRepository, tmdbClient)
+        HomeViewModel(appRepository, preferencesRepository, tmdbClient, mediaRepository)
     }
 }

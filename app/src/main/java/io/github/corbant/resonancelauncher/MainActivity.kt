@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
+import io.github.corbant.resonancelauncher.data.repository.MediaRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.ui.navigation.AppNavHost
@@ -35,6 +36,10 @@ class MainActivity : ComponentActivity() {
         TmdbClient()
     }
 
+    private val mediaRepository by lazy {
+        MediaRepository(tmdbClient)
+    }
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +56,7 @@ class MainActivity : ComponentActivity() {
                     preferencesRepository = preferencesRepository,
                     tmdbClient = tmdbClient,
                     serverManager = serverManager,
+                    mediaRepository = mediaRepository,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)

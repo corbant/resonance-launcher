@@ -80,3 +80,14 @@ fun Context.uninstallAppByPackage(packageName: String) {
         Toast.makeText(this, "Could not launch uninstaller", Toast.LENGTH_SHORT).show()
     }
 }
+
+fun Context.launchTrailer(youtubeKey: String) {
+    val intent = Intent(Intent.ACTION_VIEW, "https://www.youtube.com/watch?v=$youtubeKey".toUri()).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    try {
+        startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(this, "Could not open trailer", Toast.LENGTH_SHORT).show()
+    }
+}

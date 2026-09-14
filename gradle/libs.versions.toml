@@ -16,6 +16,7 @@ palette = "1.0.0"
 qrcode = "4.5.0"
 ktor = "3.5.2"
 navigation = "2.10.0"
+youtubePlayer = "13.0.0"
 
 
 [libraries]
@@ -39,6 +40,7 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-palette = { group = "androidx.palette", name = "palette-ktx", version.ref = "palette" }
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin", version.ref = "qrcode" }
+youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtubePlayer" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

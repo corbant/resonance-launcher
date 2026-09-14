@@ -8,8 +8,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
+import io.github.corbant.resonancelauncher.data.repository.MediaRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
+import io.github.corbant.resonancelauncher.ui.features.details.DetailsScreen
+import io.github.corbant.resonancelauncher.ui.features.details.DetailsViewModel
+import io.github.corbant.resonancelauncher.ui.features.details.createDetailsViewModelFactory
 import io.github.corbant.resonancelauncher.ui.features.home.HomeScreen
 import io.github.corbant.resonancelauncher.ui.features.home.HomeViewModel
 import io.github.corbant.resonancelauncher.ui.features.home.createHomeViewModelFactory
@@ -24,7 +28,8 @@ fun AppNavHost(
     preferencesRepository: LauncherPreferencesRepository,
     tmdbClient: TmdbClient,
     serverManager: SetupServerManager,
-    modifier: Modifier,
+    mediaRepository: MediaRepository,
+    modifier: Modifier = Modifier,
 ) {
     NavHost(
         navController = navController,
@@ -36,7 +41,8 @@ fun AppNavHost(
                 factory = createHomeViewModelFactory(
                     appRepository,
                     preferencesRepository,
-                    tmdbClient
+                    tmdbClient,
+                    mediaRepository
                 )
             )
 
@@ -62,8 +68,18 @@ fun AppNavHost(
         }
 
         composable<Route.MediaDetails> {
-            // TODO: implement this
+            val detailsViewModel: DetailsViewModel = viewModel(
+                factory = createDetailsViewModelFactory(
+                    mediaRepository = mediaRepository,
+                    appRepository = appRepository,
+                    preferencesRepository = preferencesRepository
+                )
+            )
+
+            DetailsScreen(
+                viewModel = detailsViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
-
 }

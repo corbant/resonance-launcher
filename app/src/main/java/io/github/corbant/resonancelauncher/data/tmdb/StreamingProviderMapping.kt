@@ -14,6 +14,10 @@ object StreamingProviderMapping {
         "com.plexapp.android" to 538                  // Plex Free Movies & TV
     )
 
+    private val PROVIDER_ID_TO_PACKAGE =
+        PACKAGE_TO_PROVIDER_ID.entries.associate { (pkg, id) -> id to pkg }
+
+    fun getPackageForProviderId(providerId: Int): String? = PROVIDER_ID_TO_PACKAGE[providerId]
     fun getProviderIdsForInstalledPackages(packageNames: Collection<String>): List<Int> {
         return packageNames.mapNotNull { PACKAGE_TO_PROVIDER_ID[it] }
     }
