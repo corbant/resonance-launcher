@@ -79,7 +79,8 @@ class DetailsViewModel(
                 _uiState.value = DetailsUiState.Success(
                     details = tmdbDetails.copy(
                         watchProviders = providers
-                    )
+                    ),
+                    showMediaPreviews = config.showMediaPreviews
                 )
             } catch (e: Exception) {
                 _uiState.value = DetailsUiState.Error(e.message ?: "Failed to load details")

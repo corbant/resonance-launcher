@@ -45,7 +45,8 @@ class MediaRepository(
                         ))
             }
             .sortedWith(
-                compareByDescending<TmdbVideoDto> { it.official == true }
+                compareByDescending<TmdbVideoDto> { !isAslVideo(it) }
+                    .thenByDescending { it.official == true }
                     .thenByDescending { it.type.equals("Trailer", ignoreCase = true) }
                     .thenByDescending { it.type.equals("Teaser", ignoreCase = true) }
             )
@@ -64,6 +65,13 @@ class MediaRepository(
             watchProviders = emptyList(),
             trailerYoutubeKey = trailerKey
         )
+    }
+
+    private fun isAslVideo(video: TmdbVideoDto): Boolean {
+        if (video.iso6391.equals("ase", ignoreCase = true)) return true
+        val name = video.name
+        return name.contains("ASL", ignoreCase = true) ||
+                name.contains("Sign Language", ignoreCase = true)
     }
 
     suspend fun resolveWatchProviders(

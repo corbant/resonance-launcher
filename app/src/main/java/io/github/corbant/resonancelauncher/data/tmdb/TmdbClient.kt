@@ -65,7 +65,8 @@ data class TmdbVideoDto(
     val name: String,
     val site: String,
     val type: String,
-    val official: Boolean? = null
+    val official: Boolean? = null,
+    @SerialName("iso_639_1") val iso6391: String? = null
 )
 
 @Serializable

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,17 +35,67 @@ fun AmbientTrailerPlayer(
     youtubeVideoKey: String,
     isMuted: Boolean,
     modifier: Modifier = Modifier,
+    onIsPlayingChanged: (Boolean) -> Unit = {},
 ) {
     var isVideoReady by remember { mutableStateOf(value = false) }
     var activePlayer by remember { mutableStateOf<YouTubePlayer?>(null) }
     var playerState by remember { mutableStateOf<PlayerConstants.PlayerState?>(null) }
+    var videoDuration by remember { mutableFloatStateOf(value = 0f) }
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val CSS_OVERLAY_HIDE = """
+        /* All End Cards, Suggested Videos & Overlays */
+        .ytp-endscreen-paginate,
+        .ytp-endscreen-content,
+        .html5-endscreen,
+        .ytp-ce-element,
+        .ytp-ce-element-show,
+        .ytp-ce-covering-overlay,
+        .ytp-ce-covering-image,
+        .ytp-ce-expanding-overlay,
+        .ytp-ce-channel,
+        .ytp-ce-video,
+        .ytp-pause-overlay,
+        .ytp-pause-overlay-container,
+        .ytp-scroll-min,
+        
+        /* Top Chrome & Branding */
+        .ytp-chrome-top,
+        .ytp-title,
+        .ytp-title-text,
+        .ytp-title-channel,
+        .ytp-watermark,
+        .ytp-show-cards-title,
+        .ytp-gradient-top,
+        .ytp-gradient-bottom,
+        
+        /* Captions / Subtitles */
+        .ytp-caption-window-container,
+        .caption-window,
+        .ytp-subtitles-player-srv,
+        .ytp-caption-segment {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            max-width: 0 !important;
+            max-height: 0 !important;
+            transform: translateY(-99999px) !important;
+        }
+    """.trimIndent().replace("\n", " ")
 
     val alpha by animateFloatAsState(
         targetValue = if (isVideoReady) 1f else 0f,
         animationSpec = tween(1200),
         label = "trailer_fade",
     )
+
+    // Notify parent when active video playback state changes
+    LaunchedEffect(isVideoReady) {
+        onIsPlayingChanged(isVideoReady)
+    }
 
     // Dynamically toggle mute state on the running player
     LaunchedEffect(isMuted) {
@@ -61,10 +112,12 @@ fun AmbientTrailerPlayer(
                     isVideoReady = true
                 }
             }
+
             PlayerConstants.PlayerState.PAUSED,
             PlayerConstants.PlayerState.ENDED -> {
                 isVideoReady = false
             }
+
             else -> Unit
         }
     }
@@ -77,6 +130,7 @@ fun AmbientTrailerPlayer(
                     isVideoReady = false
                     activePlayer?.pause()
                 }
+
                 Lifecycle.Event.ON_RESUME -> activePlayer?.play()
                 else -> Unit
             }
@@ -110,7 +164,8 @@ fun AmbientTrailerPlayer(
                         .rel(0)
 
                     try {
-                        val field = IFramePlayerOptions.Builder::class.java.getDeclaredField("builderOptions")
+                        val field =
+                            IFramePlayerOptions.Builder::class.java.getDeclaredField("builderOptions")
                         field.isAccessible = true
                         val json = field[builder] as? JSONObject
                         json?.apply {
@@ -138,38 +193,28 @@ fun AmbientTrailerPlayer(
                             evaluateJavascript(
                                 """
                                 (function() {
-                                    function applyStyles(doc) {
-                                        if (!doc) return;
-                                        try {
-                                            var style = doc.getElementById('resonance-custom-styles');
-                                            if (!style) {
-                                                style = doc.createElement('style');
-                                                style.id = 'resonance-custom-styles';
-                                                style.innerHTML = 'html, body, iframe, #player, .html5-video-player, .html5-video-container { pointer-events: none !important; user-select: none !important; } .ytp-bezel, .ytp-bezel-icon, .ytp-bezel-text, .ytp-large-play-button, .ytp-large-play-button-red-bg, .ytp-button, .ytp-play-button, .ytp-chrome-top, .ytp-chrome-bottom, .ytp-gradient-top, .ytp-gradient-bottom, .ytp-watermark, .ytp-pause-overlay, .ytp-scroll-min, .ytp-pause-overlay-container, .ytp-ce-element, .caption-window, .ytp-caption-window-container, .ytp-caption-segment, .ytp-spinner { display: none !important; opacity: 0 !important; visibility: hidden !important; width: 0px !important; height: 0px !important; pointer-events: none !important; }';
-                                                (doc.head || doc.documentElement).appendChild(style);
-                                            }
-                                        } catch(e) {}
+                                    var styleId = 'yt-remove-style';
+                                    var existing = document.getElementById(styleId);
+                                    if (!existing) {
+                                        var style = document.createElement('style');
+                                        style.type = 'text/css';
+                                        style.innerHTML = '$CSS_OVERLAY_HIDE';
+                                        (document.head || document.documentElement).appendChild(style);
                                     }
+                                    
                                     try {
-                                        if (window.player) {
-                                            if (window.player.unloadModule) {
-                                                window.player.unloadModule('captions');
-                                                window.player.unloadModule('cc');
+                                        var player = window.player || document.getElementById('player');
+                                        if (player) {
+                                            if (typeof player.unloadModule === 'function') {
+                                                player.unloadModule('captions');
+                                                player.unloadModule('cc');
                                             }
-                                            if (window.player.setOption) {
-                                                window.player.setOption('captions', 'track', {});
-                                                window.player.setOption('cc', 'track', {});
+                                            if (typeof player.setOptions === 'function') {
+                                                player.setOption('captions', 'track', {});
+                                                player.setOption('cc', 'track', {});
                                             }
                                         }
                                     } catch (e) {}
-                                    applyStyles(document);
-                                    try {
-                                        for (var i = 0; i < window.frames.length; i++) {
-                                            try {
-                                                applyStyles(window.frames[i].document);
-                                            } catch(e) {}
-                                        }
-                                    } catch(e) {}
                                 })();
                                 """.trimIndent(),
                                 null
@@ -191,6 +236,20 @@ fun AmbientTrailerPlayer(
                         ) {
                             setupWebView()
                             playerState = state
+                        }
+
+                        override fun onVideoDuration(
+                            youTubePlayer: YouTubePlayer,
+                            duration: Float
+                        ) {
+                            videoDuration = duration
+                        }
+
+                        override fun onCurrentSecond(youTubePlayer: YouTubePlayer, second: Float) {
+                            // Fade out 2 seconds before the video ends to prevent showing YouTube end cards or cover pages
+                            if (videoDuration > 0f && (videoDuration - second) <= 2f && isVideoReady) {
+                                isVideoReady = false
+                            }
                         }
                     }
 

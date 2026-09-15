@@ -1,16 +1,20 @@
 package io.github.corbant.resonancelauncher.ui.features.details
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -41,6 +45,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +62,8 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
+import androidx.tv.material3.OutlinedIconButton
+import androidx.tv.material3.OutlinedIconButtonDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import io.github.corbant.resonancelauncher.model.MediaDetails
@@ -64,17 +73,100 @@ import io.github.corbant.resonancelauncher.util.launchAppByPackage
 import io.github.corbant.resonancelauncher.util.launchAppStore
 import io.github.corbant.resonancelauncher.util.launchTrailer
 
+val VolumeUpIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "VolumeUp",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.White)) {
+            moveTo(3f, 9f)
+            lineTo(3f, 15f)
+            lineTo(7f, 15f)
+            lineTo(12f, 19f)
+            lineTo(12f, 5f)
+            lineTo(7f, 9f)
+            close()
+            moveTo(16.5f, 12f)
+            curveTo(16.5f, 10.23f, 15.48f, 8.71f, 14f, 7.97f)
+            lineTo(14f, 16.02f)
+            curveTo(15.48f, 15.29f, 16.5f, 13.77f, 16.5f, 12f)
+            close()
+            moveTo(14f, 3.23f)
+            lineTo(14f, 5.29f)
+            curveTo(16.89f, 6.15f, 19f, 8.83f, 19f, 12f)
+            curveTo(19f, 15.17f, 16.89f, 17.85f, 14f, 18.71f)
+            lineTo(14f, 20.77f)
+            curveTo(18.01f, 19.86f, 21f, 16.28f, 21f, 12f)
+            curveTo(21f, 7.72f, 18.01f, 4.14f, 14f, 3.23f)
+            close()
+        }
+    }.build()
+}
+
+val VolumeOffIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "VolumeOff",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.White)) {
+            moveTo(16.5f, 12f)
+            curveTo(16.5f, 10.23f, 15.48f, 8.71f, 14f, 7.97f)
+            lineTo(14f, 10.18f)
+            lineTo(16.45f, 12.63f)
+            curveTo(16.48f, 12.43f, 16.5f, 12.22f, 16.5f, 12f)
+            close()
+            moveTo(19f, 12f)
+            curveTo(19f, 12.82f, 18.85f, 13.61f, 18.59f, 14.34f)
+            lineTo(20.12f, 15.87f)
+            curveTo(20.68f, 14.7f, 21f, 13.39f, 21f, 12f)
+            curveTo(21f, 7.72f, 18.01f, 4.14f, 14f, 3.23f)
+            lineTo(14f, 5.29f)
+            curveTo(16.89f, 6.15f, 19f, 8.83f, 19f, 12f)
+            close()
+            moveTo(4.27f, 3f)
+            lineTo(3f, 4.27f)
+            lineTo(7.73f, 9f)
+            lineTo(3f, 9f)
+            lineTo(3f, 15f)
+            lineTo(7f, 15f)
+            lineTo(12f, 19f)
+            lineTo(12f, 13.27f)
+            lineTo(16.25f, 17.52f)
+            curveTo(15.58f, 18.04f, 14.83f, 18.45f, 14f, 18.7f)
+            lineTo(14f, 20.76f)
+            curveTo(15.38f, 20.45f, 16.63f, 19.82f, 17.68f, 18.96f)
+            lineTo(19.73f, 21f)
+            lineTo(21f, 19.73f)
+            lineTo(12f, 10.73f)
+            lineTo(4.27f, 3f)
+            close()
+            moveTo(12f, 5f)
+            lineTo(10.12f, 6.5f)
+            lineTo(12f, 8.38f)
+            lineTo(12f, 5f)
+            close()
+        }
+    }.build()
+}
+
 @Composable
 fun DetailsScreen(
     viewModel: DetailsViewModel,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onPlayProvider: ((WatchProvider?) -> Unit)? = null,
-    onTrailerFullScreen: ((String) -> Unit)? = null
+    onTrailerFullScreen: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isMuted by remember { mutableStateOf(value = true) }
+    var isTrailerPlaying by remember { mutableStateOf(value = false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         when (val state = uiState) {
@@ -86,10 +178,11 @@ fun DetailsScreen(
             is DetailsUiState.Success -> {
                 DetailsBackdrop(backdropUrl = state.details.backdropUrl)
 
-                if (!state.details.trailerYoutubeKey.isNullOrBlank()) {
+                if (state.showMediaPreviews && !state.details.trailerYoutubeKey.isNullOrBlank()) {
                     AmbientTrailerPlayer(
                         youtubeVideoKey = state.details.trailerYoutubeKey,
                         isMuted = isMuted,
+                        onIsPlayingChanged = { isTrailerPlaying = it },
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -128,6 +221,38 @@ fun DetailsScreen(
                         }
                     }
                 )
+
+                // Top Right Corner Mute Button (Appears only when trailer is actively playing)
+                AnimatedVisibility(
+                    visible = isTrailerPlaying,
+                    enter = fadeIn(tween(600)),
+                    exit = fadeOut(tween(600)),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 40.dp, end = 56.dp)
+                ) {
+                    OutlinedIconButton(
+                        onClick = { isMuted = !isMuted },
+                        modifier = Modifier.size(48.dp),
+                        scale = OutlinedIconButtonDefaults.scale(focusedScale = 1.15f),
+                        colors = OutlinedIconButtonDefaults.colors(
+                            containerColor = Color.Black.copy(alpha = 0.5f),
+                            focusedContainerColor = Color.White,
+                            contentColor = Color.White,
+                            focusedContentColor = Color.Black
+                        ),
+                        border = OutlinedIconButtonDefaults.border(
+                            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))),
+                            focusedBorder = Border(BorderStroke(2.dp, Color.White))
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isMuted) VolumeOffIcon else VolumeUpIcon,
+                            contentDescription = if (isMuted) "Unmute" else "Mute",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             }
 
             is DetailsUiState.Error -> {
@@ -225,7 +350,6 @@ fun DetailsSkeleton(
             .padding(start = 56.dp, top = 48.dp, bottom = 48.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        // Real title if known from summary, otherwise placeholder
         if (title.isNotBlank()) {
             Text(
                 text = title,
@@ -245,7 +369,6 @@ fun DetailsSkeleton(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Metadata Pills Skeleton (Year • Rating • Runtime)
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -269,7 +392,6 @@ fun DetailsSkeleton(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Overview Skeleton (3 Lines)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
                 modifier = placeholderModifier
@@ -290,7 +412,6 @@ fun DetailsSkeleton(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Action Buttons Skeleton
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -336,7 +457,6 @@ fun DetailsContent(
             .padding(start = 56.dp, top = 48.dp, bottom = 48.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        // Title
         Text(
             text = details.title,
             style = MaterialTheme.typography.displaySmall,
@@ -348,7 +468,6 @@ fun DetailsContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Metadata: Rating • Year • Runtime • Genres
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -409,7 +528,6 @@ fun DetailsContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Overview
         Text(
             text = details.overview,
             style = MaterialTheme.typography.bodyLarge,
@@ -480,7 +598,6 @@ fun DetailsContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Watch Providers Row
         if (details.watchProviders.isNotEmpty()) {
             Text(
                 text = "Available On",
@@ -488,7 +605,10 @@ fun DetailsContent(
                 color = Color.White.copy(alpha = 0.6f)
             )
             Spacer(modifier = Modifier.height(10.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
                 items(details.watchProviders) { provider ->
                     Card(
                         onClick = { onPlayClicked(provider) },
@@ -543,28 +663,38 @@ fun DetailsError(
             text = "Error Loading Details",
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.8f)
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Button(
                 onClick = onRetry,
                 modifier = Modifier.focusRequester(retryButtonRequester),
-                shape = ButtonDefaults.shape(CircleShape)
+                shape = ButtonDefaults.shape(CircleShape),
+                scale = ButtonDefaults.scale(focusedScale = 1.06f)
             ) {
-                Text("Retry")
+                Text("Retry", fontWeight = FontWeight.SemiBold)
             }
+
             OutlinedButton(
                 onClick = onBack,
-                shape = ButtonDefaults.shape(CircleShape)
+                shape = ButtonDefaults.shape(CircleShape),
+                scale = ButtonDefaults.scale(focusedScale = 1.06f)
             ) {
-                Text("Back")
+                Text("Go Back")
             }
         }
     }
