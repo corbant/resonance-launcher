@@ -10,7 +10,9 @@ import androidx.navigation.toRoute
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.repository.MediaRepository
+import io.github.corbant.resonancelauncher.data.repository.WatchHistoryRepository
 import io.github.corbant.resonancelauncher.model.MediaItem
+import io.github.corbant.resonancelauncher.model.WatchProvider
 import io.github.corbant.resonancelauncher.ui.navigation.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +24,8 @@ class DetailsViewModel(
     savedStateHandle: SavedStateHandle,
     private val mediaRepository: MediaRepository,
     private val appRepository: AppRepository,
-    private val preferencesRepository: LauncherPreferencesRepository
+    private val preferencesRepository: LauncherPreferencesRepository,
+    private val watchHistoryRepository: WatchHistoryRepository
 ) : ViewModel() {
 
     private val route: Route.MediaDetails? = try {
@@ -48,6 +51,20 @@ class DetailsViewModel(
     fun retry() {
         _uiState.value = DetailsUiState.Loading(initialSummary)
         loadFullDetails()
+    }
+
+    fun recordWatch(provider: WatchProvider? = null) {
+        val currentState = uiState.value
+        if (currentState is DetailsUiState.Success) {
+            val watchItem = mediaRepository.createWatchHistoryItem(
+                details = currentState.details,
+                mediaType = mediaType,
+                provider = provider ?: currentState.details.watchProviders.firstOrNull()
+            )
+            viewModelScope.launch {
+                watchHistoryRepository.recordWatch(watchItem)
+            }
+        }
     }
 
     private fun loadFullDetails() {
@@ -92,7 +109,8 @@ class DetailsViewModel(
 fun createDetailsViewModelFactory(
     mediaRepository: MediaRepository,
     appRepository: AppRepository,
-    preferencesRepository: LauncherPreferencesRepository
+    preferencesRepository: LauncherPreferencesRepository,
+    watchHistoryRepository: WatchHistoryRepository
 ) = viewModelFactory {
     initializer {
         val savedStateHandle = createSavedStateHandle()
@@ -100,7 +118,8 @@ fun createDetailsViewModelFactory(
             savedStateHandle = savedStateHandle,
             mediaRepository = mediaRepository,
             appRepository = appRepository,
-            preferencesRepository = preferencesRepository
+            preferencesRepository = preferencesRepository,
+            watchHistoryRepository = watchHistoryRepository
         )
     }
 }

@@ -51,6 +51,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import io.github.corbant.resonancelauncher.model.AppItem
 import io.github.corbant.resonancelauncher.model.MediaItem
+import io.github.corbant.resonancelauncher.model.WatchHistoryItem
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppContextMenuDialog
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppGrid
 import io.github.corbant.resonancelauncher.ui.features.home.components.AppTrayRow
@@ -166,7 +167,7 @@ fun HomeScreen(
             }
         }
 
-        // 2. Main Scrollable Content Layer (TopBar, Hero Banner, Rows all scroll together)
+        // 2. Main Scrollable Content Layer
         HomeContent(
             uiState = uiState,
             onOpenLauncherSettings = onNavigateToSettings,
@@ -174,6 +175,7 @@ fun HomeScreen(
             onMediaFocused = viewModel::onMediaFocused,
             onMediaUnfocused = viewModel::onMediaUnfocused,
             onMediaClick = onMediaClick,
+            onRemoveFromWatchHistory = viewModel::removeFromWatchHistory,
             onLaunchApp = { packageName -> context.launchAppByPackage(packageName) },
             onAppLongClick = { app ->
                 selectedAppPackageName = app.packageName
@@ -316,11 +318,14 @@ private fun HomeContent(
     onMediaFocused: (MediaItem) -> Unit,
     onMediaUnfocused: (MediaItem) -> Unit,
     onMediaClick: (Int, String) -> Unit,
+    onRemoveFromWatchHistory: (WatchHistoryItem) -> Unit,
     onLaunchApp: (String) -> Unit,
     onAppLongClick: (AppItem) -> Unit,
     onShowAllApps: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -368,6 +373,26 @@ private fun HomeContent(
                                 )
                             }
 
+                            is HomeSection.ContinueWatching -> {
+                                ContinueWatchingRow(
+                                    title = section.title,
+                                    items = section.items,
+                                    onItemClick = { watchItem ->
+                                        if (!watchItem.providerPackageName.isNullOrBlank()) {
+                                            context.launchAppByPackage(watchItem.providerPackageName)
+                                        } else {
+                                            onMediaClick(watchItem.id, watchItem.mediaType)
+                                        }
+                                    },
+                                    onRemoveItem = { watchItem ->
+                                        onRemoveFromWatchHistory(watchItem)
+                                    },
+                                    onOpenDetails = { watchItem ->
+                                        onMediaClick(watchItem.id, watchItem.mediaType)
+                                    }
+                                )
+                            }
+
                             is HomeSection.MediaContent -> {
                                 MediaContentRow(
                                     title = section.title,
@@ -388,10 +413,6 @@ private fun HomeContent(
                                         onMediaClick(mediaItem.id, section.mediaType)
                                     }
                                 )
-                            }
-
-                            is HomeSection.ContinueWatching -> {
-                                ContinueWatchingRow()
                             }
                         }
                     }

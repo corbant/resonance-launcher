@@ -7,10 +7,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.repository.MediaRepository
+import io.github.corbant.resonancelauncher.data.repository.WatchHistoryRepository
 import io.github.corbant.resonancelauncher.data.tmdb.StreamingProviderMapping
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.data.tmdb.toMediaItem
 import io.github.corbant.resonancelauncher.model.MediaItem
+import io.github.corbant.resonancelauncher.model.WatchHistoryItem
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,8 @@ class HomeViewModel(
     private val appRepository: AppRepository,
     private val preferencesRepository: LauncherPreferencesRepository,
     private val tmdbClient: TmdbClient,
-    private val mediaRepository: MediaRepository
+    private val mediaRepository: MediaRepository,
+    private val watchHistoryRepository: WatchHistoryRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -38,8 +41,9 @@ class HomeViewModel(
             try {
                 combine(
                     appRepository.observeInstalledApps(),
-                    preferencesRepository.configFlow
-                ) { apps, config ->
+                    preferencesRepository.configFlow,
+                    watchHistoryRepository.watchHistoryFlow
+                ) { apps, config, watchHistory ->
                     val visibleApps = apps.filter { it.packageName !in config.hiddenPackageNames }
                     val appsMap = visibleApps.associateBy { it.packageName }
                     val favoriteApps = if (config.favoritePackageNames.isEmpty()) {
@@ -79,6 +83,15 @@ class HomeViewModel(
 
                     val sections = buildList {
                         add(HomeSection.AppTray(title = "Favorite Apps", apps = favoriteApps))
+
+                        if (watchHistory.isNotEmpty()) {
+                            add(
+                                HomeSection.ContinueWatching(
+                                    title = "Continue Watching",
+                                    items = watchHistory
+                                )
+                            )
+                        }
 
                         if (!featuredMovies.isNullOrEmpty()) {
                             add(
@@ -162,15 +175,28 @@ class HomeViewModel(
             preferencesRepository.toggleHideApp(packageName)
         }
     }
+
+    fun removeFromWatchHistory(item: WatchHistoryItem) {
+        viewModelScope.launch {
+            watchHistoryRepository.removeFromHistory(item.id, item.mediaType)
+        }
+    }
 }
 
 fun createHomeViewModelFactory(
     appRepository: AppRepository,
     preferencesRepository: LauncherPreferencesRepository,
     tmdbClient: TmdbClient,
-    mediaRepository: MediaRepository
+    mediaRepository: MediaRepository,
+    watchHistoryRepository: WatchHistoryRepository
 ) = viewModelFactory {
     initializer {
-        HomeViewModel(appRepository, preferencesRepository, tmdbClient, mediaRepository)
+        HomeViewModel(
+            appRepository,
+            preferencesRepository,
+            tmdbClient,
+            mediaRepository,
+            watchHistoryRepository
+        )
     }
 }

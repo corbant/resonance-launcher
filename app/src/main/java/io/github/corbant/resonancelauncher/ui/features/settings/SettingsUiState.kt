@@ -15,5 +15,6 @@ data class SettingsUiState(
     val config: LauncherConfig = LauncherConfig(),
     val hiddenApps: List<AppItem> = emptyList(),
     val isHiddenAppsModalOpen: Boolean = false,
-    val pairingModal: PairingModalState = PairingModalState.Idle
+    val pairingModal: PairingModalState = PairingModalState.Idle,
+    val isNotificationListenerGranted: Boolean = false
 )
