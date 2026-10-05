@@ -13,6 +13,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.repository.MediaRepository
+import io.github.corbant.resonancelauncher.data.repository.WatchHistoryRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.ui.navigation.AppNavHost
@@ -40,6 +41,10 @@ class MainActivity : ComponentActivity() {
         MediaRepository(tmdbClient)
     }
 
+    private val watchHistoryRepository by lazy {
+        WatchHistoryRepository(applicationContext)
+    }
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +62,7 @@ class MainActivity : ComponentActivity() {
                     tmdbClient = tmdbClient,
                     serverManager = serverManager,
                     mediaRepository = mediaRepository,
+                    watchHistoryRepository = watchHistoryRepository,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)

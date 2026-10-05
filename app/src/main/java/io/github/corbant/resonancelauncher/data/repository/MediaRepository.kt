@@ -5,6 +5,7 @@ import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbVideoDto
 import io.github.corbant.resonancelauncher.model.MediaDetails
 import io.github.corbant.resonancelauncher.model.MediaItem
+import io.github.corbant.resonancelauncher.model.WatchHistoryItem
 import io.github.corbant.resonancelauncher.model.WatchProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -98,5 +99,32 @@ class MediaRepository(
                 null
             }
         }
+    }
+
+    fun createWatchHistoryItem(
+        details: MediaDetails,
+        mediaType: String,
+        provider: WatchProvider? = null,
+        seasonNumber: Int? = null,
+        episodeNumber: Int? = null,
+        episodeTitle: String? = null,
+        progressPercentage: Float? = null,
+        nextEpisodeTitle: String? = null
+    ): WatchHistoryItem {
+        return WatchHistoryItem(
+            id = details.id,
+            title = details.title,
+            mediaType = mediaType,
+            posterUrl = details.posterUrl,
+            backdropUrl = details.backdropUrl,
+            lastWatchedTimestamp = System.currentTimeMillis(),
+            providerPackageName = provider?.packageName,
+            providerName = provider?.name,
+            seasonNumber = seasonNumber ?: if (mediaType == "tv") 1 else null,
+            episodeNumber = episodeNumber ?: if (mediaType == "tv") 1 else null,
+            episodeTitle = episodeTitle,
+            progressPercentage = progressPercentage ?: 0.15f,
+            nextEpisodeTitle = nextEpisodeTitle
+        )
     }
 }

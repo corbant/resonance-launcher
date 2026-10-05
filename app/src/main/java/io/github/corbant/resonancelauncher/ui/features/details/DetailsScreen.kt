@@ -205,6 +205,7 @@ fun DetailsScreen(
                 DetailsContent(
                     details = state.details,
                     onPlayClicked = { provider ->
+                        viewModel.recordWatch(provider)
                         if (onPlayProvider != null) {
                             onPlayProvider(provider)
                         } else if (provider?.packageName != null) {
@@ -222,7 +223,7 @@ fun DetailsScreen(
                     }
                 )
 
-                // Top Right Corner Mute Button (Appears only when trailer is actively playing)
+                // Top Right Corner Mute Button
                 AnimatedVisibility(
                     visible = isTrailerPlaying,
                     enter = fadeIn(tween(600)),

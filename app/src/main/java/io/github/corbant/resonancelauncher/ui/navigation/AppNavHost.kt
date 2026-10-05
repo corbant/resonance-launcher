@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.repository.MediaRepository
+import io.github.corbant.resonancelauncher.data.repository.WatchHistoryRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.data.tmdb.TmdbClient
 import io.github.corbant.resonancelauncher.ui.features.details.DetailsScreen
@@ -29,6 +30,7 @@ fun AppNavHost(
     tmdbClient: TmdbClient,
     serverManager: SetupServerManager,
     mediaRepository: MediaRepository,
+    watchHistoryRepository: WatchHistoryRepository,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -42,7 +44,8 @@ fun AppNavHost(
                     appRepository,
                     preferencesRepository,
                     tmdbClient,
-                    mediaRepository
+                    mediaRepository,
+                    watchHistoryRepository
                 )
             )
 
@@ -72,7 +75,8 @@ fun AppNavHost(
                 factory = createDetailsViewModelFactory(
                     mediaRepository = mediaRepository,
                     appRepository = appRepository,
-                    preferencesRepository = preferencesRepository
+                    preferencesRepository = preferencesRepository,
+                    watchHistoryRepository = watchHistoryRepository
                 )
             )
 

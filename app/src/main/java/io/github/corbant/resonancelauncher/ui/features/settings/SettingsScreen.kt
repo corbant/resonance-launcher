@@ -21,12 +21,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Icon
@@ -45,9 +48,14 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val config = uiState.config
     val isModalOpen = uiState.pairingModal !is PairingModalState.Idle
+
+    LaunchedEffect(Unit) {
+        viewModel.checkNotificationListenerStatus(context)
+    }
 
     BackHandler(enabled = isModalOpen || uiState.isHiddenAppsModalOpen) {
         if (uiState.isHiddenAppsModalOpen) {
@@ -115,6 +123,38 @@ fun SettingsScreen(
                                     isSet = config.streamingAvailabilityApiKey.isNotBlank()
                                 )
                             }
+                        },
+                        shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp))
+                    )
+
+                    // Real-Time Watch Progress Sync Setting
+                    ListItem(
+                        selected = false,
+                        onClick = { viewModel.openNotificationListenerSettings(context) },
+                        headlineContent = {
+                            Text(
+                                text = "Real-Time Watch Progress Sync",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = "Sync continue watching when media is paused or finished in streaming apps",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(alpha = 0.8f)
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = null
+                            )
+                        },
+                        trailingContent = {
+                            StatusBadge(
+                                label = "Media Access",
+                                isSet = uiState.isNotificationListenerGranted
+                            )
                         },
                         shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp))
                     )

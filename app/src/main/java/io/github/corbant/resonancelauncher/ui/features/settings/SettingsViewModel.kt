@@ -1,5 +1,6 @@
 package io.github.corbant.resonancelauncher.ui.features.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -8,6 +9,8 @@ import io.github.corbant.resonancelauncher.data.repository.AppRepository
 import io.github.corbant.resonancelauncher.data.repository.LauncherPreferencesRepository
 import io.github.corbant.resonancelauncher.data.server.SetupServerManager
 import io.github.corbant.resonancelauncher.util.QrCodeGenerator
+import io.github.corbant.resonancelauncher.util.isNotificationListenerEnabled
+import io.github.corbant.resonancelauncher.util.launchNotificationListenerSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +45,15 @@ class SettingsViewModel(
                 _uiState.update { it.copy(config = config, hiddenApps = hiddenApps) }
             }
         }
+    }
+
+    fun checkNotificationListenerStatus(context: Context) {
+        val isGranted = context.isNotificationListenerEnabled()
+        _uiState.update { it.copy(isNotificationListenerGranted = isGranted) }
+    }
+
+    fun openNotificationListenerSettings(context: Context) {
+        context.launchNotificationListenerSettings()
     }
 
     fun toggleShowMediaPreviews() {
