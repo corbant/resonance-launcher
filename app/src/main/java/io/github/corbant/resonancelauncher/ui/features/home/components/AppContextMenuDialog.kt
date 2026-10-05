@@ -37,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
@@ -49,6 +50,7 @@ import coil3.compose.AsyncImage
 import io.github.corbant.resonancelauncher.model.AppItem
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import android.view.KeyEvent as AndroidKeyEvent
 
 @Composable
 fun AppContextMenuDialog(
@@ -69,17 +71,36 @@ fun AppContextMenuDialog(
 ) {
     val firstButtonRequester = remember { FocusRequester() }
     var isClickable by remember { mutableStateOf(false) }
+    var suppressOpeningKeyUp by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        delay(150.milliseconds)
         firstButtonRequester.requestFocus()
-        delay(100.milliseconds)
+        delay(1500.milliseconds)
         isClickable = true
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .onPreviewKeyEvent { event ->
+                val nativeEvent = event.nativeKeyEvent
+                if (nativeEvent.action == AndroidKeyEvent.ACTION_UP && nativeEvent.keyCode in setOf(
+                        AndroidKeyEvent.KEYCODE_DPAD_CENTER,
+                        AndroidKeyEvent.KEYCODE_ENTER,
+                        AndroidKeyEvent.KEYCODE_NUMPAD_ENTER
+                )
+                ) {
+                    if (suppressOpeningKeyUp) {
+                        suppressOpeningKeyUp = false
+                        isClickable = true
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
             .background(Color.Black.copy(alpha = 0.75f)),
         contentAlignment = Alignment.Center
     ) {

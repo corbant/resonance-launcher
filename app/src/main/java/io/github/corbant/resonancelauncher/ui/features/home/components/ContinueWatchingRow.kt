@@ -1,11 +1,9 @@
 package io.github.corbant.resonancelauncher.ui.features.home.components
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -56,7 +55,10 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import android.view.KeyEvent as AndroidKeyEvent
 import io.github.corbant.resonancelauncher.model.WatchHistoryItem
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ContinueWatchingRow(
@@ -109,7 +111,6 @@ fun ContinueWatchingRow(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ContinueWatchingCard(
     item: WatchHistoryItem,
@@ -126,14 +127,11 @@ fun ContinueWatchingCard(
     ) {
         Card(
             onClick = onClick,
+            onLongClick = onLongClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(aspectRatio)
-                .onFocusChanged { isFocused = it.isFocused }
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                ),
+                .onFocusChanged { isFocused = it.isFocused },
             shape = CardDefaults.shape(shape = RoundedCornerShape(16.dp)),
             scale = CardDefaults.scale(focusedScale = 1.08f),
             border = CardDefaults.border(
@@ -259,22 +257,39 @@ fun ContinueWatchingContextMenuDialog(
     modifier: Modifier = Modifier
 ) {
     val firstButtonRequester = remember { FocusRequester() }
-
-    BackHandler(onBack = onDismiss)
+    var isClickable by remember { mutableStateOf(false) }
+    var suppressOpeningKeyUp by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         firstButtonRequester.requestFocus()
+        delay(1500.milliseconds)
+        isClickable = true
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.75f)),
-        contentAlignment = Alignment.Center
-    ) {
+    Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier
+                .then(modifier)
                 .width(400.dp)
+                .onPreviewKeyEvent { event ->
+                    val nativeEvent = event.nativeKeyEvent
+                    if (nativeEvent.action == AndroidKeyEvent.ACTION_UP && nativeEvent.keyCode in setOf(
+                            AndroidKeyEvent.KEYCODE_DPAD_CENTER,
+                            AndroidKeyEvent.KEYCODE_ENTER,
+                            AndroidKeyEvent.KEYCODE_NUMPAD_ENTER
+                    )
+                    ) {
+                        if (suppressOpeningKeyUp) {
+                            suppressOpeningKeyUp = false
+                            isClickable = true
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }
                 .clip(RoundedCornerShape(24.dp))
                 .border(
                     width = 1.dp,
@@ -337,7 +352,7 @@ fun ContinueWatchingContextMenuDialog(
                 ) {
                     // Resume Action
                     Button(
-                        onClick = onResume,
+                        onClick = { if (isClickable) onResume() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(firstButtonRequester)
@@ -358,7 +373,7 @@ fun ContinueWatchingContextMenuDialog(
 
                     // View Details Action
                     Button(
-                        onClick = onOpenDetails,
+                        onClick = { if (isClickable) onOpenDetails() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -377,7 +392,7 @@ fun ContinueWatchingContextMenuDialog(
 
                     // Remove from Continue Watching Action
                     Button(
-                        onClick = onRemove,
+                        onClick = { if (isClickable) onRemove() },
                         colors = ButtonDefaults.colors(
                             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
                             contentColor = MaterialTheme.colorScheme.onErrorContainer

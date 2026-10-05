@@ -1,5 +1,6 @@
 package io.github.corbant.resonancelauncher.service
 
+import android.app.Notification
 import android.content.ComponentName
 import android.media.MediaMetadata
 import android.media.session.MediaController
@@ -7,6 +8,7 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.SystemClock
 import android.service.notification.NotificationListenerService
+import android.service.notification.StatusBarNotification
 import io.github.corbant.resonancelauncher.data.repository.WatchHistoryRepository
 import io.github.corbant.resonancelauncher.model.WatchHistoryItem
 import kotlinx.coroutines.CoroutineScope
@@ -24,10 +26,20 @@ class MediaSessionNotificationService : NotificationListenerService() {
 
     private val activeCallbacks = ConcurrentHashMap<MediaController, MediaController.Callback>()
     private val lastSessionTitles = ConcurrentHashMap<MediaController, String>()
+    private val notificationTitles = ConcurrentHashMap<String, String>()
 
     override fun onCreate() {
         super.onCreate()
         setupMediaSessionObserver()
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        try {
+            activeNotifications.forEach(::updateNotificationTitle)
+            updateActiveSessionsForPackages(notificationTitles.keys)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onDestroy() {
@@ -40,7 +52,58 @@ class MediaSessionNotificationService : NotificationListenerService() {
         }
         activeCallbacks.clear()
         lastSessionTitles.clear()
+        notificationTitles.clear()
         serviceScope.cancel()
+    }
+
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
+        updateNotificationTitle(sbn)
+        updateActiveSessionsForPackages(listOf(sbn.packageName))
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        val packageName = sbn.packageName
+        notificationTitles.remove(packageName)
+        try {
+            activeNotifications
+                .filter { it.packageName == packageName }
+                .forEach(::updateNotificationTitle)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun updateNotificationTitle(sbn: StatusBarNotification) {
+        val notification = sbn.notification
+        val extras = notification.extras
+        val hasMediaSession = extras?.containsKey(Notification.EXTRA_MEDIA_SESSION) == true
+        val isMediaNotification = hasMediaSession ||
+                notification.category == Notification.CATEGORY_TRANSPORT
+        if (!isMediaNotification) return
+
+        val title = sequenceOf(
+            extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
+            extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
+            extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+        ).firstOrNull { !it.isNullOrBlank() }?.trim()
+
+        if (title == null) {
+            notificationTitles.remove(sbn.packageName)
+        } else {
+            notificationTitles[sbn.packageName] = title
+        }
+    }
+
+    private fun updateActiveSessionsForPackages(packageNames: Collection<String>) {
+        if (packageNames.isEmpty()) return
+        activeCallbacks.keys
+            .filter { it.packageName in packageNames }
+            .forEach { controller ->
+                handleStateOrMetadataUpdate(
+                    controller,
+                    controller.playbackState,
+                    controller.metadata
+                )
+            }
     }
 
     private fun setupMediaSessionObserver() {
@@ -79,6 +142,11 @@ class MediaSessionNotificationService : NotificationListenerService() {
                 try {
                     controller.registerCallback(callback)
                     activeCallbacks[controller] = callback
+                    handleStateOrMetadataUpdate(
+                        controller,
+                        controller.playbackState,
+                        controller.metadata
+                    )
                 } catch (_: Exception) {
                 }
             }
@@ -90,21 +158,26 @@ class MediaSessionNotificationService : NotificationListenerService() {
         state: PlaybackState?,
         metadata: MediaMetadata?
     ) {
-        if (state == null || metadata == null) return
+        if (state == null) return
 
-        val title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)
-            ?: metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
-            ?: return
+        val title = sequenceOf(
+            metadata?.getString(MediaMetadata.METADATA_KEY_TITLE),
+            metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE),
+            metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
+            notificationTitles[controller.packageName]
+        ).firstOrNull { !it.isNullOrBlank() }?.trim() ?: return
 
-        val durationMs = metadata.getLong(MediaMetadata.METADATA_KEY_DURATION)
+        val durationMs = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
         if (durationMs <= 0) return
 
-        val currentPosMs = if (state.state == PlaybackState.STATE_PLAYING && state.lastPositionUpdateTime > 0) {
-            val elapsedSinceUpdate = SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
-            (state.position + (elapsedSinceUpdate * state.playbackSpeed)).toLong()
-        } else {
-            state.position
-        }
+        val currentPosMs =
+            if (state.state == PlaybackState.STATE_PLAYING && state.lastPositionUpdateTime > 0) {
+                val elapsedSinceUpdate =
+                    SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
+                (state.position + (elapsedSinceUpdate * state.playbackSpeed)).toLong()
+            } else {
+                state.position
+            }
 
         val remainingMs = durationMs - currentPosMs
         val progressRatio = (currentPosMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
@@ -115,9 +188,11 @@ class MediaSessionNotificationService : NotificationListenerService() {
         lastSessionTitles[controller] = title
 
         // Multi-signal Completion criteria
-        val isStoppedState = state.state == PlaybackState.STATE_STOPPED || state.state == PlaybackState.STATE_NONE
+        val isStoppedState =
+            state.state == PlaybackState.STATE_STOPPED || state.state == PlaybackState.STATE_NONE
         val isNearEnd = remainingMs in 1..30_000 || progressRatio >= 0.92f
-        val isCompleted = (isStoppedState && progressRatio >= 0.50f) || isNearEnd || isTitleChangedInSameSession
+        val isCompleted =
+            (isStoppedState && progressRatio >= 0.50f) || isNearEnd || isTitleChangedInSameSession
 
         val packageName = controller.packageName
         val appName = try {
@@ -127,13 +202,18 @@ class MediaSessionNotificationService : NotificationListenerService() {
             packageName
         }
 
-        val albumOrSeries = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)
-            ?: metadata.getString(MediaMetadata.METADATA_KEY_ARTIST)
+        val albumOrSeries = metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM)
+            ?: metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
 
-        val artUri = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
-            ?: metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)
+        val artUri = metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
+            ?: metadata?.getString(MediaMetadata.METADATA_KEY_ART_URI)
+            ?: metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
 
-        val isTvType = albumOrSeries != null || title.contains("Episode", ignoreCase = true) || title.contains("Season", ignoreCase = true)
+        val isTvType =
+            albumOrSeries != null || title.contains("Episode", ignoreCase = true) || title.contains(
+                "Season",
+                ignoreCase = true
+            )
         val mediaType = if (isTvType) "tv" else "movie"
 
         val itemId = (title + packageName).hashCode()
@@ -174,4 +254,5 @@ class MediaSessionNotificationService : NotificationListenerService() {
             }
         }
     }
+
 }
